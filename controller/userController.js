@@ -1,5 +1,7 @@
 const { User, Patient, Personal, Doctor, Nurse, Driver, Worker, ServiceChief } = require('../model/User');
 const bcrypt = require('bcrypt');
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 
 // Start Of the Add User (CRUD) Operations
 
@@ -134,6 +136,7 @@ async function editUser(req, res, next) {
         user.phoneNumber = req.body.phoneNumber || user.phoneNumber;
         user.email = req.body.email || user.email;
         user.role = req.body.role || user.role;
+
         await user.save();
         if(oldRole !== newRole && oldRole == "Patient") {
             await Patient.deleteOne({ id_patient: id });
@@ -305,8 +308,78 @@ async function displayUser(req, res, next) {
 
 // Start Of Login Function 
 
-    await 
+    async function login(req, res, next) {
+            const email = req.body.email;
+            const password = req.body.password;
+            const foundUser = await User.findOne({ email: email });
+            if (!foundUser) {
+                return res.status(400).json({ message: "Email not found" });
+            } 
+            const currentPass = foundUser.password;
+            const isValidPassword = await bcrypt.compare(password, currentPass);
+            if (!isValidPassword) {
+                return res.status(400).json({ message: "Invalid password" });
+            }else{
+                return res.status(200).json({ message: "User connected" }); 
+            }
+    }
 
 // End Of Login Function
 
-module.exports = { adduser , editUser , delUser , displayUser };
+// Start of Forget Password Function 
+ 
+    async function forgetPassword(req, res, next) {
+        const email = req.body.email;
+        const foundUser = await User.findOne({ email: email });
+        if (!foundUser) {
+            return res.status(400).json({ message: "Email not found" });
+        }
+    }
+
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: 'noreplay.infinitystack@gmail.com',
+            pass: 'dwpf ienb ltmg tvgb'
+        }
+    });
+
+    async function forgetPassword(req, res, next) {
+        try {
+            const email = req.body.email;
+            const foundUser = await User.findOne({ email: email });
+            if (!foundUser) {
+                return res.status(400).json({ message: "Email not found" });
+            }
+    
+            const token = crypto.randomBytes(20).toString('hex');
+    
+            foundUser.resetPasswordToken = token;
+            foundUser.resetPasswordExpires = Date.now() + 3600000;
+            await foundUser.save();
+    
+            const mailOptions = {
+                to: foundUser.email,
+                from: 'noreplay.infinitystack@gmail.com',
+                subject: 'Password Reset',
+                text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n
+                Please click on the following link, or paste this into your browser to complete the process:\n\n
+                http://${req.headers.host}/reset/${token}\n\n
+                If you did not request this, please ignore this email and your password will remain unchanged.\n`
+            };
+    
+            transporter.sendMail(mailOptions, (err, response) => {
+                if (err) {
+                    console.error('There was an error: ', err);
+                    return res.status(500).json({ message: 'Error sending email', error: err.message });
+                } else {
+                    res.status(200).json({ message: 'Recovery email sent' });
+                }
+            });
+        } catch (error) {
+            console.error('Error in forgetPassword:', error);
+            res.status(500).json({ message: 'Error in forgetPassword', error: error.message });
+        }
+    }
+
+module.exports = { adduser , editUser , delUser , displayUser , login , forgetPassword };

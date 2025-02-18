@@ -9,7 +9,9 @@ const UserSchema = new mongoose.Schema({
         enum: ['Patient', 'Doctor', 'Nurse', 'Driver', 'worker', 'Service_Chief'], 
         required: true 
     },
-    password: { type: String, required: true }
+    password: { type: String, required: true },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date }
 }, { timestamps: true });
 
 const User = mongoose.model('User', UserSchema);
