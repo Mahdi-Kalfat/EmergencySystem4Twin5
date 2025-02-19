@@ -2,6 +2,8 @@ const { User, Patient, Personal, Doctor, Nurse, Driver, Worker, ServiceChief } =
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
 // Start Of the Add User (CRUD) Operations
 
@@ -320,7 +322,9 @@ async function displayUser(req, res, next) {
             if (!isValidPassword) {
                 return res.status(400).json({ message: "Invalid password" });
             }else{
-                return res.status(200).json({ message: "User connected" }); 
+                const token = jwt.sign({ id: foundUser._id, email: foundUser.email, role: foundUser.role }, 
+                process.env.JWT_SECRET, { expiresIn: '1h' });
+                return res.status(200).json({ message: "User connected", token: token }); 
             }
     }
 
