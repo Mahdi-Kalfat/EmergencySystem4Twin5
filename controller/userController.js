@@ -24,14 +24,14 @@ async function createRoleSpecificRecord(role, personal, req) {
         const doctor = new Doctor({
             id_doctor: personal._id,
             speciality: req.body.speciality,
-            garde: req.body.garde,
+            grade: req.body.grade,
         });
         await doctor.save();
     } else if (role === "Nurse") {
         const nurse = new Nurse({
             id_nurse: personal._id,
             poste_inf: req.body.poste_inf,
-            garde_inf: req.body.garde_inf,
+            grade_inf: req.body.grade_inf,
         });
         await nurse.save();
     } else if (role === "Driver") {
@@ -165,12 +165,12 @@ async function editUser(req, res, next) {
                 if (newRole === "Doctor") {
                     await Doctor.updateOne({ id_doctor: personal._id }, {
                         speciality: req.body.speciality,
-                        garde: req.body.garde,
+                        grade: req.body.grade,
                     });
                 } else if (newRole === "Nurse") {
                     await Nurse.updateOne({ id_nurse: personal._id }, {
                         poste_inf: req.body.poste_inf,
-                        garde_inf: req.body.garde_inf,
+                        grade_inf: req.body.grade_inf,
                     });
                 } else if (newRole === "Driver") {
                     await Driver.updateOne({ id_driver: personal._id }, {
@@ -264,14 +264,14 @@ async function displayUser(req, res, next) {
                     userDetails = {
                         ...userDetails,
                         speciality: doctor.speciality,
-                        garde: doctor.garde
+                        grade: doctor.grade
                     };
                 } else if (user.role === "Nurse") {
                     const nurse = await Nurse.findOne({ id_nurse: personal._id });
                     userDetails = {
                         ...userDetails,
                         poste_inf: nurse.poste_inf,
-                        garde_inf: nurse.garde_inf
+                        grade_inf: nurse.grade_inf
                     };
                 } else if (user.role === "Driver") {
                     const driver = await Driver.findOne({ id_driver: personal._id });
