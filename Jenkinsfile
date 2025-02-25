@@ -7,7 +7,7 @@ pipeline {
                 script {
                     checkout([
                         $class: 'GitSCM', 
-                        branches: [[name: '*/Backend']],
+                        branches: [[name: '*/BackEnd']],
                         userRemoteConfigs: [[url: 'https://github.com/Mahdi-Kalfat/EmergencySystem4Twin5.git']]
                     ])
                 }
