@@ -2,14 +2,14 @@ pipeline {
     agent any
 
     tools {
-        nodejs "NodeJS"
+        nodejs "NodeJS"  // Ensure NodeJS tool is configured in Jenkins global tools
     }
 
     stages {
         stage('Checkout GIT') {
             steps {
                 echo 'Pulling the latest code...'
-                git branch: 'BackEnd',
+                git branch: 'BackEnd', 
                     url: 'https://github.com/Mahdi-Kalfat/EmergencySystem4Twin5.git'
             }
         }
@@ -29,32 +29,32 @@ pipeline {
             steps {
                 script {
                     dir('BackEnd') {
-                        sh 'npm test' 
+                        sh 'npm test'  // Ensure tests are working correctly
                     }
                 }
             }
         }
 
-        // stage('Building and Running Containers') {
-        //     steps {
-        //         script {
-        //             dir('BackEnd') {
-        //                 // Build and run containers using docker-compose
-        //                 sh 'docker-compose up --build -d'
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Building and Running Containers') {
+            steps {
+                script {
+                    dir('BackEnd') {
+                        // Ensure Docker Compose is installed and configured correctly
+                        sh 'docker-compose up --build -d'  // Run docker-compose commands
+                    }
+                }
+            }
+        }
 
-        // stage('Cleanup') {
-        //     steps {
-        //         script {
-        //             dir('BackEnd') {
-        //                 // Bring down the containers after build and testing
-        //                 sh 'docker-compose down'
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Cleanup') {
+            steps {
+                script {
+                    dir('BackEnd') {
+                        // Ensure containers are shut down properly after the build
+                        sh 'docker-compose down'  // Clean up after containers
+                    }
+                }
+            }
+        }
     }
 }
