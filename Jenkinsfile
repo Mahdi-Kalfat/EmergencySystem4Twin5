@@ -32,6 +32,7 @@ pipeline {
                         sh '''
                             git fetch origin main:main
                             git checkout main -- docker-compose.yml
+                            ls -la  # Debugging: List files to verify the checkout
                         '''
                     }
                 }
@@ -42,7 +43,6 @@ pipeline {
             steps {
                 script {
                     dir('BackEnd') {
-                        // Ensure Docker Compose is installed and configured correctly
                         sh 'docker-compose up --build -d'  // Run docker-compose commands
                     }
                 }
@@ -53,7 +53,6 @@ pipeline {
             steps {
                 script {
                     dir('BackEnd') {
-                        // Ensure containers are shut down properly after the build
                         sh 'docker-compose down'  // Clean up after containers
                     }
                 }
