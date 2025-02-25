@@ -44,14 +44,5 @@ pipeline {
             }
         }
 
-        stage('Build Backend') {
-            steps {
-                script {
-                    dir('BackEnd') {
-                        sh 'npm run build'  // Build the Node.js backend if necessary
-                    }
-                }
-            }
-        }
     }
 }
