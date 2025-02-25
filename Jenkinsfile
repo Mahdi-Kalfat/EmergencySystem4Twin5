@@ -35,26 +35,26 @@ pipeline {
             }
         }
 
-        stage('Building and Running Containers') {
-            steps {
-                script {
-                    dir('BackEnd') {
-                        // Build and run containers using docker-compose
-                        sh 'docker-compose up --build -d'
-                    }
-                }
-            }
-        }
+        // stage('Building and Running Containers') {
+        //     steps {
+        //         script {
+        //             dir('BackEnd') {
+        //                 // Build and run containers using docker-compose
+        //                 sh 'docker-compose up --build -d'
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('Cleanup') {
-            steps {
-                script {
-                    dir('BackEnd') {
-                        // Bring down the containers after build and testing
-                        sh 'docker-compose down'
-                    }
-                }
-            }
-        }
+        // stage('Cleanup') {
+        //     steps {
+        //         script {
+        //             dir('BackEnd') {
+        //                 // Bring down the containers after build and testing
+        //                 sh 'docker-compose down'
+        //             }
+        //         }
+        //     }
+        // }
     }
 }
