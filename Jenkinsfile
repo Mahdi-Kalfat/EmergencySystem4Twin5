@@ -14,13 +14,13 @@ pipeline {
             }
         }
 
-        stage('Docker Compose Down') {
-            steps {
-                script {
-                    sh 'docker-compose down'
-                }
-            }
-        }
+        // stage('Docker Compose Down') {
+        //     steps {
+        //         script {
+        //             sh 'docker-compose down'
+        //         }
+        //     }
+        // }
 
         stage('Install Dependencies - Backend') {
             steps {
@@ -33,16 +33,6 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies - Frontend') {
-            steps {
-                script {
-                    dir('FrontEnd') {
-                        sh 'rm -rf node_modules package-lock.json'
-                        sh 'npm install'
-                    }
-                }
-            }
-        }
 
         stage('Run Tests - Backend') {
             steps {
