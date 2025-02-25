@@ -9,7 +9,7 @@ pipeline {
         stage('Checkout GIT') {
             steps {
                 echo 'Pulling the latest code...'
-                git branch: 'main',
+                git branch: 'BackEnd',
                 url: 'https://github.com/Mahdi-Kalfat/EmergencySystem4Twin5.git',
             }
         }
