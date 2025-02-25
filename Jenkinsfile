@@ -14,14 +14,6 @@ pipeline {
             }
         }
 
-        // stage('Docker Compose Down') {
-        //     steps {
-        //         script {
-        //             sh 'docker-compose down'
-        //         }
-        //     }
-        // }
-
         stage('Install Dependencies - Backend') {
             steps {
                 script {
@@ -33,7 +25,6 @@ pipeline {
             }
         }
 
-
         stage('Run Tests - Backend') {
             steps {
                 script {
@@ -43,13 +34,27 @@ pipeline {
                 }
             }
         }
-        stage('Building images (node and mongo)') {
-            steps{
-                script {
-                            sh('docker-compose build')
-        }
-    }
-}
 
+        stage('Building and Running Containers') {
+            steps {
+                script {
+                    dir('BackEnd') {
+                        // Build and run containers using docker-compose
+                        sh 'docker-compose up --build -d'
+                    }
+                }
+            }
+        }
+
+        stage('Cleanup') {
+            steps {
+                script {
+                    dir('BackEnd') {
+                        // Bring down the containers after build and testing
+                        sh 'docker-compose down'
+                    }
+                }
+            }
+        }
     }
 }
