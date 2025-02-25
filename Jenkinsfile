@@ -13,32 +13,31 @@ pipeline {
                 }
             }
         }
-            stages {
+
         stage('Install dependencies') {
             steps {
                 script {
-                    sh('npm install')
+                    sh 'npm install'
                 }
             }
         }
 
         stage('Unit Test') {
             steps {
-              script{
-              sh('npm test')
+                script {
+                    sh 'npm test'
+                }
+            }
+        }
+
+        stage('Build application') {
+            steps {
+                script {
+                    sh 'npm run build-dev'
+                }
             }
         }
     }
-        stage('Build application'){
-          steps {  
-            script {
-            sh('npm run build-dev')
-          }
-        }
-        }
-
-
-}
 }
 
 
