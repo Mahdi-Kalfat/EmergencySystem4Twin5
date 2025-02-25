@@ -1,8 +1,10 @@
 pipeline {
     agent any
-tools {
-    nodejs "NodeJS"
-}
+
+    tools {
+        nodejs "NodeJS"
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -23,13 +25,15 @@ tools {
                     sh 'npm install -g nodemon'
                 }
             }
+        }
+
         stage('Unit Test') {
             steps {
-              script{
-              sh('npm test')
+                script {
+                    sh 'npm test'
+                }
             }
         }
-    }        }
 
         stage('Build application') {
             steps {
@@ -40,5 +44,3 @@ tools {
         }
     }
 }
-
-
