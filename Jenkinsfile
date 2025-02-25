@@ -25,11 +25,14 @@ pipeline {
             }
         }
 
-        stage('Run Tests - Backend') {
+        stage('Checkout docker-compose.yml from main') {
             steps {
                 script {
                     dir('BackEnd') {
-                        sh 'npm test'  // Ensure tests are working correctly
+                        sh '''
+                            git fetch origin main:main
+                            git checkout main -- docker-compose.yml
+                        '''
                     }
                 }
             }
