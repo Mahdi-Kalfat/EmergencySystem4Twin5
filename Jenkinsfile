@@ -2,14 +2,14 @@ pipeline {
     agent any
 
     tools {
-        nodejs "NodeJS"  // Ensure NodeJS tool is configured in Jenkins global tools
+        nodejs "NodeJS"
     }
 
     stages {
         stage('Checkout GIT') {
             steps {
                 echo 'Pulling the latest code...'
-                git branch: 'BackEnd', 
+                git branch: 'BackEnd',
                     url: 'https://github.com/Mahdi-Kalfat/EmergencySystem4Twin5.git'
             }
         }
@@ -25,38 +25,36 @@ pipeline {
             }
         }
 
-        stage('Checkout docker-compose.yml from main') {
+        stage('Run Tests - Backend') {
             steps {
                 script {
                     dir('BackEnd') {
-                        sh '''
-                            git fetch origin main:main
-                            git checkout main -- docker-compose.yml
-                            ls -la  # Debugging: List files to verify the checkout
-                        '''
+                        sh 'npm test' 
                     }
                 }
             }
         }
 
-        stage('Building and Running Containers') {
-            steps {
-                script {
-                    dir('BackEnd') {
-                        sh 'docker-compose up --build -d'  // Run docker-compose commands
-                    }
-                }
-            }
-        }
+        // stage('Building and Running Containers') {
+        //     steps {
+        //         script {
+        //             dir('BackEnd') {
+        //                 // Build and run containers using docker-compose
+        //                 sh 'docker-compose up --build -d'
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('Cleanup') {
-            steps {
-                script {
-                    dir('BackEnd') {
-                        sh 'docker-compose down'  // Clean up after containers
-                    }
-                }
-            }
-        }
+        // stage('Cleanup') {
+        //     steps {
+        //         script {
+        //             dir('BackEnd') {
+        //                 // Bring down the containers after build and testing
+        //                 sh 'docker-compose down'
+        //             }
+        //         }
+        //     }
+        // }
     }
 }
