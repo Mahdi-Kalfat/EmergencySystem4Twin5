@@ -26,8 +26,8 @@ pipeline {
             steps {
                 script {
                     dir('BackEnd') {
-                        sh 'rm -rf node_modules package-lock.json' // Clean existing dependencies
-                        sh 'npm install'  // Install all dependencies
+                        sh 'rm -rf node_modules package-lock.json' 
+                        sh 'npm install'  
                     }
                 }
             }
@@ -38,7 +38,7 @@ pipeline {
             steps {
                 script {
                     dir('BackEnd') {
-                        sh 'npm test'  // Run Jest or Mocha tests
+                        sh 'npm test' 
                     }
                 }
             }
