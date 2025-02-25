@@ -1,8 +1,18 @@
 pipeline {
     agent any
-     tools {
-        nodejs 'Node18' // Use the configured NodeJS installation
-    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    checkout([
+                        $class: 'GitSCM', 
+                        branches: [[name: '*/Backend']],  // Spécifier la branche Backend
+                        userRemoteConfigs: [[url: 'https://github.com/Mahdi-Kalfat/EmergencySystem4Twin5.git']]
+                    ])
+                }
+            }
+        }
 
     stages {
         stage('Install dependencies') {
