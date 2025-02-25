@@ -10,7 +10,7 @@ pipeline {
             steps {
                 echo 'Pulling the latest code...'
                 git branch: 'BackEnd',
-                url: 'https://github.com/Mahdi-Kalfat/EmergencySystem4Twin5.git',
+                    url: 'https://github.com/Mahdi-Kalfat/EmergencySystem4Twin5.git'
             }
         }
 
@@ -54,8 +54,6 @@ pipeline {
             }
         }
 
-
-
         stage('Build Backend') {
             steps {
                 script {
@@ -65,40 +63,5 @@ pipeline {
                 }
             }
         }
-
-
-        // stage('Docker Build & Push Backend') {
-        //     steps {
-        //         script {
-        //             dir('BackEnd') {
-        //                 docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
-        //                     def backendImage = docker.build("narnidhal/foyer-backend:6.0")
-        //                     backendImage.push()
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
-
-        // stage('Docker Build & Push Frontend') {
-        //     steps {
-        //         script {
-        //             dir('FrontEnd') {
-        //                 docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
-        //                     def frontendImage = docker.build("narnidhal/foyer-frontend:4")
-        //                     frontendImage.push()
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
-
-        // stage('Deploy with Docker Compose') {
-        //     steps {
-        //         script {
-        //             sh 'docker-compose up -d --build'
-        //         }
-        //     }
-        // }
     }
 }
