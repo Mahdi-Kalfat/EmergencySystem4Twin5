@@ -1,5 +1,6 @@
 var createError = require('http-errors');
 var express = require('express');
+const cors = require("cors");
 var path = require('path');
 var cookieParser = require('cookie-parser');
 const mongo = require("mongoose");
@@ -8,6 +9,7 @@ var logger = require('morgan');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var ambulanceRouter = require('./routes/Ambulance');
 
 mongo.connect(mongoconnect.url, {
   useNewUrlParser: true,
@@ -26,8 +28,12 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+//Access from front end
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+app.use('/ambulance', ambulanceRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

@@ -310,23 +310,37 @@ async function displayUser(req, res, next) {
 
 // Start Of Login Function 
 
-    async function login(req, res, next) {
-            const email = req.body.email;
-            const password = req.body.password;
-            const foundUser = await User.findOne({ email: email });
-            if (!foundUser) {
-                return res.status(400).json({ message: "Email not found" });
-            } 
-            const currentPass = foundUser.password;
-            const isValidPassword = await bcrypt.compare(password, currentPass);
-            if (!isValidPassword) {
-                return res.status(400).json({ message: "Invalid password" });
-            }else{
-                const token = jwt.sign({ id: foundUser._id, email: foundUser.email, role: foundUser.role }, 
-                process.env.JWT_SECRET, { expiresIn: '1h' });
-                return res.status(200).json({ message: "User connected", token: token }); 
-            }
+async function login(req, res, next) {
+    try {
+        const email = req.body.email;
+        const password = req.body.password;
+        const foundUser = await User.findOne({ email: email });
+        if (!foundUser) {
+            return res.status(400).json({ message: "Email not found" });
+        }
+        const currentPass = foundUser.password;
+        const isValidPassword = await bcrypt.compare(password, currentPass);
+        if (!isValidPassword) {
+            return res.status(400).json({ message: "Invalid password" });
+        } else {
+            const token = jwt.sign({ id: foundUser._id, email: foundUser.email, role: foundUser.role }, 
+            process.env.JWT_SECRET, { expiresIn: '1h' });
+                
+            return res.status(200).json({ 
+                message: "User connected", 
+                auth_token: token, 
+                user: {
+                    name: foundUser.name,
+                    email: foundUser.email,
+                    role: foundUser.role
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error in login:', error);
+        res.status(500).json({ message: 'Error in login', error: error.message });
     }
+}
 
 // End Of Login Function
 
@@ -365,11 +379,34 @@ async function displayUser(req, res, next) {
             const mailOptions = {
                 to: foundUser.email,
                 from: 'noreplay.infinitystack@gmail.com',
-                subject: 'Password Reset',
-                text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n
-                Please click on the following link, or paste this into your browser to complete the process:\n\n
-                http://${req.headers.host}/reset/${token}\n\n
-                If you did not request this, please ignore this email and your password will remain unchanged.\n`
+                subject: 'Emergency Password Reset Request',
+                html: `
+                    <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                        <div style="background-color: #007BFF; padding: 20px; text-align: center; color: white;">
+                            <h1 style="margin: 0;">Hospital Emergency System</h1>
+                            <p style="margin: 5px 0 0;">Your safety and security are our priority.</p>
+                        </div>
+                        <div style="padding: 20px;">
+                            <h2 style="color: #007BFF;">Password Reset Request</h2>
+                            <p>Hello ${foundUser.name},</p>
+                            <p>We received a request to reset your password for the Hospital Emergency System. If you did not make this request, please ignore this email.</p>
+                            <p>To reset your password, please click the button below:</p>
+                            <a href="http://localhost:5173/resetPass/${token}" 
+                               style="display: inline-block; background-color: #007BFF; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 20px 0;">
+                                Reset Password
+                            </a>
+                            <p>If the button above does not work, copy and paste the following link into your browser:</p>
+                            <p style="word-break: break-all;">http://localhost:5173/resetPass/${token}</p>
+                            <p>This link will expire in <strong>1 hour</strong>.</p>
+                            <p>If you have any questions or need further assistance, please contact our support team immediately.</p>
+                            <p>Stay safe,</p>
+                            <p><strong>Hospital Emergency System Team</strong></p>
+                        </div>
+                        <div style="background-color: #f8f9fa; padding: 10px; text-align: center; font-size: 12px; color: #666;">
+                            <p>This is an automated message. Please do not reply to this email.</p>
+                        </div>
+                    </div>
+                `
             };
     
             transporter.sendMail(mailOptions, (err, response) => {
@@ -386,4 +423,82 @@ async function displayUser(req, res, next) {
         }
     }
 
-module.exports = { adduser , editUser , delUser , displayUser , login , forgetPassword };
+// End of Forget Password Function
+
+// Start of Reset Password Function
+
+async function resetPassword(req, res, next) {
+    try {
+        const token = req.params.token;
+        const newPassword = req.body.password;
+
+        const foundUser = await User.findOne({ 
+            resetPasswordToken: token, 
+            resetPasswordExpires: { $gt: Date.now() } 
+        });
+
+        if (!foundUser) {
+            return res.status(400).json({ message: "Password reset token is invalid or has expired." });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        foundUser.password = hashedPassword;
+        foundUser.resetPasswordToken = undefined;
+        foundUser.resetPasswordExpires = undefined;
+
+        await foundUser.save();
+
+        // Hospital-themed email template
+        const mailOptions = {
+            to: foundUser.email,
+            from: 'noreplay.infinitystack@gmail.com',
+            subject: 'Password Reset Successful',
+            html: `
+                <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                    <div style="background-color: #007BFF; padding: 20px; text-align: center; color: white;">
+                        <h1 style="margin: 0;">Hospital Emergency System</h1>
+                        <p style="margin: 5px 0 0;">Your safety and security are our priority.</p>
+                    </div>
+                    <div style="padding: 20px;">
+                        <h2 style="color: #007BFF;">Password Reset Successful</h2>
+                        <p>Hello ${foundUser.name},</p>
+                        <p>Your password for the Hospital Emergency System has been successfully reset.</p>
+                        <p>If you did not make this change, please contact our support team immediately to secure your account.</p>
+                        <p>For your safety, we recommend:</p>
+                        <ul>
+                            <li>Keeping your password secure and not sharing it with anyone.</li>
+                            <li>Using a strong, unique password that you don't use elsewhere.</li>
+                            <li>Enabling two-factor authentication if available.</li>
+                        </ul>
+                        <p>If you have any questions or need further assistance, please don't hesitate to contact us.</p>
+                        <p>Stay safe,</p>
+                        <p><strong>Hospital Emergency System Team</strong></p>
+                    </div>
+                    <div style="background-color: #f8f9fa; padding: 10px; text-align: center; font-size: 12px; color: #666;">
+                        <p>This is an automated message. Please do not reply to this email.</p>
+                    </div>
+                </div>
+            `
+        };
+
+        transporter.sendMail(mailOptions, (err, response) => {
+            if (err) {
+                console.error('Error sending email:', err);
+                return res.status(500).json({ message: 'Password reset successful, but failed to send email notification.', error: err.message });
+            } else {
+                res.status(200).json({ message: "Password has been reset successfully. Notification email sent." });
+            }
+        });
+
+    } catch (error) {
+        console.error('Error in resetPassword:', error);
+        res.status(500).json({ message: 'Error in resetPassword', error: error.message });
+    }
+}
+
+// End of Reset Password Function
+
+
+module.exports = { adduser , editUser , delUser , displayUser , login , forgetPassword , resetPassword };
