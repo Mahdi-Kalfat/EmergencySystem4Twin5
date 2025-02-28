@@ -54,29 +54,32 @@ const SignIn = () => {
 
   // Handle forgot password submission
   const handleForgotPassword = async () => {
+    // Validate email format
+    if (!forgotPasswordEmail || !forgotPasswordEmail.includes("@")) {
+      setEmailError("Please enter a valid email address.");
+      return;
+    }
+
+    // Clear email error if validation passes
+    setEmailError("");
+
     try {
-      // Validate email input
-      if (!forgotPasswordEmail || !forgotPasswordEmail.includes("@")) {
-        setEmailError("Please enter a valid email address.");
-        return; // Stop execution if email is invalid
-      }
-
-      // Clear email error if validation passes
-      setEmailError("");
-
       // Make the API request
-      const response = await fetch("http://localhost:3000/users/forgot-password", {
+      const response = await fetch("http://localhost:3000/users/forgetPassword", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: forgotPasswordEmail }),
       });
 
-      // Always show the success message, regardless of the server response
+      // Always show the success message, regardless of the API response
       setResetLinkSent(true);
       setError(""); // Clear any errors
+
+      // Clear the email input field
+      setForgotPasswordEmail("");
     } catch (err) {
-      console.error("Error in forgetPassword:", err);
-      setError(err.message || "An error occurred. Please try again.");
+      // Handle any unexpected errors
+      setError("An error occurred. Please try again.");
     }
   };
 
@@ -186,12 +189,11 @@ const SignIn = () => {
             {/* Place for an Image */}
             <div className="mb-6">
               <img
-                src="https://via.placeholder.com/150" // Replace with your image URL
-                alt="Welcome Image"
-                className="w-32 h-32 rounded-full mx-auto"
+                src="public\logoEms.png" // Replace with your image URL
+                alt="EMS Image"
+                className="w-100 h-100 rounded-full mx-auto"
               />
             </div>
-            <h2 className="text-3xl font-semibold text-white">Welcome Back!</h2>
           </div>
         </div>
       </div>
@@ -264,4 +266,4 @@ const SignIn = () => {
   );
 };
 
-export default SignIn;  
+export default SignIn;

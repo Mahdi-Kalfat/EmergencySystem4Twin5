@@ -5,6 +5,7 @@ import { Route, Routes } from 'react-router-dom'
 import Home from './pages/Home'
 import ProtectedRoute from './components/ProtectedRoute'
 import SessionHandler from './components/SessionHandler'
+import ResetPass from './pages/resetPass'
 function App() {
   const [count, setCount] = useState(0)
 
@@ -14,6 +15,7 @@ function App() {
     <Routes>
           {/* Public Route */}
           <Route path="/" element={<SignIn />} />
+          <Route path="/resetPass/:token" element={<ResetPass />} />
 
           {/* Protected Route */}
           <Route
