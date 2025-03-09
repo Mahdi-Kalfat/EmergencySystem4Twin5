@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import { FaEye, FaEyeSlash, FaEnvelope, FaLock, FaSun, FaMoon, FaTimes } from "react-icons/fa";
+import ReCAPTCHA from "react-google-recaptcha"; // Import reCAPTCHA
 
 const SignIn = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -9,10 +10,11 @@ const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false); // Forgot password modal state
-  const [forgotPasswordEmail, setForgotPasswordEmail] = useState(""); // Email input for forgot password
-  const [resetLinkSent, setResetLinkSent] = useState(false); // State to show the success message
-  const [emailError, setEmailError] = useState(""); // State for email validation error
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [resetLinkSent, setResetLinkSent] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [recaptchaToken, setRecaptchaToken] = useState(""); // State to store reCAPTCHA token
   const navigate = useNavigate();
 
   // Redirect if user is already authenticated
@@ -28,57 +30,64 @@ const SignIn = () => {
 
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
 
-  const handleLogin = useCallback(async (e) => {
-    e.preventDefault();
-    setError(""); // Reset error state
+  // Handle reCAPTCHA change
+  const handleRecaptchaChange = (token) => {
+    setRecaptchaToken(token); // Store the reCAPTCHA token
+  };
 
-    try {
-      const response = await fetch("http://localhost:3000/users/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-        credentials: "include",
-      });
+  const handleLogin = useCallback(
+    async (e) => {
+      e.preventDefault();
+      setError(""); // Reset error state
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Invalid email or password");
+      // Check if reCAPTCHA token is present
+      if (!recaptchaToken) {
+        setError("Please complete the reCAPTCHA.");
+        return;
+      }
 
-      // Store user & token
-      localStorage.setItem("user", JSON.stringify(data.user));
-      Cookies.set("token", data.auth_token, { secure: true, sameSite: "Strict" });
-      navigate("/home");
-    } catch (err) {
-      setError(err.message || "An error occurred. Please try again.");
-    }
-  }, [email, password, navigate]);
+      try {
+        const response = await fetch("http://localhost:3000/users/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, recaptchaToken }), // Include reCAPTCHA token
+          credentials: "include",
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || "Invalid email or password");
+
+        // Store user & token
+        localStorage.setItem("user", JSON.stringify(data.user));
+        Cookies.set("token", data.auth_token, { secure: true, sameSite: "Strict" });
+        navigate("/home");
+      } catch (err) {
+        setError(err.message || "An error occurred. Please try again.");
+      }
+    },
+    [email, password, recaptchaToken, navigate]
+  );
 
   // Handle forgot password submission
   const handleForgotPassword = async () => {
-    // Validate email format
     if (!forgotPasswordEmail || !forgotPasswordEmail.includes("@")) {
       setEmailError("Please enter a valid email address.");
       return;
     }
 
-    // Clear email error if validation passes
     setEmailError("");
 
     try {
-      // Make the API request
       const response = await fetch("http://localhost:3000/users/forgetPassword", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: forgotPasswordEmail }),
       });
 
-      // Always show the success message, regardless of the API response
       setResetLinkSent(true);
-      setError(""); // Clear any errors
-
-      // Clear the email input field
+      setError("");
       setForgotPasswordEmail("");
     } catch (err) {
-      // Handle any unexpected errors
       setError("An error occurred. Please try again.");
     }
   };
@@ -91,12 +100,8 @@ const SignIn = () => {
         <div className="flex flex-col justify-center items-center w-full lg:w-1/2 p-6">
           <div className="w-full max-w-md">
             <div className="mb-5 sm:mb-8">
-              <h1 className="mb-2 font-semibold text-2xl dark:text-white/90">
-                Sign In
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Enter your email and password to sign in!
-              </p>
+              <h1 className="mb-2 font-semibold text-2xl dark:text-white/90">Sign In</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Enter your email and password to sign in!</p>
             </div>
             <form onSubmit={handleLogin}>
               <div className="space-y-5">
@@ -118,12 +123,7 @@ const SignIn = () => {
                       required
                     />
                   </div>
-                  {/* Email Error Message */}
-                  {error && error.includes("email") && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {error}
-                    </p>
-                  )}
+                  {error && error.includes("email") && <p className="mt-1 text-sm text-red-600">{error}</p>}
                 </div>
 
                 {/* Password Field */}
@@ -134,7 +134,7 @@ const SignIn = () => {
                   <div className="relative">
                     <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
                     <input
-                      type={showPassword ? 'text' : 'password'}
+                      type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -148,13 +148,16 @@ const SignIn = () => {
                       {showPassword ? <FaEyeSlash /> : <FaEye />}
                     </span>
                   </div>
-                  {/* Password Error Message */}
-                  {error && (
-                    <p className="mt-1 text-sm text-red-600">
-                      Invalid email or password
-                    </p>
-                  )}
+                  {error && <p className="mt-1 text-sm text-red-600">Invalid email or password</p>}
                 </div>
+              </div>
+
+              {/* reCAPTCHA */}
+              <div className="mt-4">
+                <ReCAPTCHA
+                  sitekey="6Ldcs-UqAAAAAFQmKnsBd78Ik7yjs1hMoFURi6Fu" // Replace with your reCAPTCHA site key
+                  onChange={handleRecaptchaChange}
+                />
               </div>
 
               {/* Submit Button */}
@@ -186,10 +189,9 @@ const SignIn = () => {
         {/* Right Section - Welcome Message */}
         <div className="hidden lg:flex items-center justify-center w-full lg:w-1/2 bg-gradient-to-r from-blue-500 to-blue-700">
           <div className="text-center">
-            {/* Place for an Image */}
             <div className="mb-6">
               <img
-                src="public\logoEms.png" // Replace with your image URL
+                src="public\logoEms.png"
                 alt="EMS Image"
                 className="w-100 h-100 rounded-full mx-auto"
               />
@@ -216,12 +218,11 @@ const SignIn = () => {
       {showForgotPasswordModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md text-gray-800 relative">
-            {/* Close Button (X) */}
             <button
               onClick={() => {
                 setShowForgotPasswordModal(false);
-                setResetLinkSent(false); // Reset the message when modal is closed
-                setEmailError(""); // Clear email error
+                setResetLinkSent(false);
+                setEmailError("");
               }}
               className="absolute top-4 right-4 p-2 text-gray-600 hover:text-gray-800"
             >
@@ -239,13 +240,7 @@ const SignIn = () => {
               onChange={(e) => setForgotPasswordEmail(e.target.value)}
               className="w-full p-3 rounded-lg border border-gray-300 bg-transparent text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
             />
-            {/* Email Validation Error */}
-            {emailError && (
-              <p className="mt-2 text-sm text-red-600">
-                {emailError}
-              </p>
-            )}
-            {/* Success Message */}
+            {emailError && <p className="mt-2 text-sm text-red-600">{emailError}</p>}
             {resetLinkSent && (
               <p className="mt-2 text-sm text-green-600">
                 If your email matches any account, a mail will be sent to the address.

@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import Cookies from 'js-cookie';
 
 const SessionHandler = () => {
-  const INACTIVITY_TIMEOUT = 1 * 60 * 1000; // 30 minutes
+  const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
   let inactivityTimer;
 
   const startInactivityTimer = () => {
