@@ -10,4 +10,5 @@ router.get("/display", authenticateToken, UserController.displayUser);
 router.post("/login", UserController.login);
 router.post("/forgetPassword", UserController.forgetPassword);
 router.put('/resetPassword/:token', UserController.resetPassword);
+router.post('/findBymail', UserController.findUserByEmail);
 module.exports = router;

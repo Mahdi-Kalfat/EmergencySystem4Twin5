@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const axios = require("axios");
 require('dotenv').config();
 
 // Start Of the Add User (CRUD) Operations
@@ -312,33 +313,49 @@ async function displayUser(req, res, next) {
 
 async function login(req, res, next) {
     try {
-        const email = req.body.email;
-        const password = req.body.password;
+        const { email, password, recaptchaToken } = req.body;
+
+        // Validate reCAPTCHA token
+        const recaptchaSecret = process.env.RECAPTCHA_SECRET_KEY; // Store your reCAPTCHA secret key in .env
+        const recaptchaUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${recaptchaSecret}&response=${recaptchaToken}`;
+
+        const recaptchaResponse = await axios.post(recaptchaUrl);
+        if (!recaptchaResponse.data.success) {
+            return res.status(400).json({ message: "reCAPTCHA verification failed. Please try again." });
+        }
+
+        // Proceed with login logic
         const foundUser = await User.findOne({ email: email });
         if (!foundUser) {
             return res.status(400).json({ message: "Email not found" });
         }
+
         const currentPass = foundUser.password;
         const isValidPassword = await bcrypt.compare(password, currentPass);
         if (!isValidPassword) {
             return res.status(400).json({ message: "Invalid password" });
-        } else {
-            const token = jwt.sign({ id: foundUser._id, email: foundUser.email, role: foundUser.role }, 
-            process.env.JWT_SECRET, { expiresIn: '1h' });
-                
-            return res.status(200).json({ 
-                message: "User connected", 
-                auth_token: token, 
-                user: {
-                    name: foundUser.name,
-                    email: foundUser.email,
-                    role: foundUser.role
-                }
-            });
         }
+
+        // Generate JWT token
+        const token = jwt.sign(
+            { id: foundUser._id, email: foundUser.email, role: foundUser.role },
+            process.env.JWT_SECRET,
+            { expiresIn: "1h" }
+        );
+
+        return res.status(200).json({
+            message: "User connected",
+            auth_token: token,
+            user: {
+                name: foundUser.name,
+                email: foundUser.email,
+                role: foundUser.role,
+                phone: foundUser.phoneNumber,
+            },
+        });
     } catch (error) {
-        console.error('Error in login:', error);
-        res.status(500).json({ message: 'Error in login', error: error.message });
+        console.error("Error in login:", error);
+        res.status(500).json({ message: "Error in login", error: error.message });
     }
 }
 
@@ -500,5 +517,76 @@ async function resetPassword(req, res, next) {
 
 // End of Reset Password Function
 
+// Start of Find User By Email Function
+async function findUserByEmail(req, res, next) {
+    try {
+        const email = req.body.email;
+        const user = await User.findOne({ email: email });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
 
-module.exports = { adduser , editUser , delUser , displayUser , login , forgetPassword , resetPassword };
+        const UserToSend = {
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            phoneNumber: user.phoneNumber,
+        };
+
+        const personal = await Personal.findOne({ id_personal: user._id });
+        const personalInfo = {
+            age: personal.age,
+            admission_date: personal.admission_date,
+            conge: personal.conge,
+            nbr_conge: personal.nbr_conge,
+        };
+
+        let userInfo = { ...UserToSend, ...personalInfo };
+
+        if (user.role === "Doctor") {
+            const doctor = await Doctor.findOne({ id_doctor: personal._id });
+            userInfo = {
+                ...userInfo,
+                speciality: doctor.speciality,
+                grade: doctor.grade,
+            };
+        } else if (user.role === "Nurse") {
+            const nurse = await Nurse.findOne({ id_nurse: personal._id });
+            userInfo = {
+                ...userInfo,
+                poste_inf: nurse.poste_inf,
+                grade_inf: nurse.grade_inf,
+            };
+        } else if (user.role === "Driver") {
+            const driver = await Driver.findOne({ id_driver: personal._id });
+            userInfo = {
+                ...userInfo,
+                experience: driver.experience,
+                garde: driver.garde,
+            };
+        } else if (user.role === "Chef") {
+            const servicechief = await ServiceChief.findOne({ id_chef: personal._id });
+            userInfo = {
+                ...userInfo,
+                speciality_chief: servicechief.speciality_chief,
+                garde: servicechief.garde,
+            };
+        } else if (user.role === "worker") {
+            const worker = await Worker.findOne({ id_worker: personal._id });
+            userInfo = {
+                ...userInfo,
+                poste: worker.poste,
+            };
+        }
+
+        res.status(200).json(userInfo);
+    } catch (error) {
+        console.error('Error in findUserByEmail:', error);
+        res.status(500).json({ message: 'Error in findUserByEmail', error: error.message });
+    }
+}
+
+// End of Find User By Email Function
+
+
+module.exports = { adduser , editUser , delUser , displayUser , login , forgetPassword , resetPassword,findUserByEmail };
