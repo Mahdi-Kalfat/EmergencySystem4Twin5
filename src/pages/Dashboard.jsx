@@ -4,6 +4,7 @@ import ChartOne from "./charts/ChartOne";
 import ChartTwo from "./charts/ChartTwo";
 
 const Dashboard = () => {
+  
   return (
     <main className="p-4 w-full">
       <div className="grid grid-cols-12 gap-6 w-full">
