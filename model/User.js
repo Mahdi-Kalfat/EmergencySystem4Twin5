@@ -25,10 +25,12 @@ const UserSchema = new mongoose.Schema({
     },
     role: { 
         type: String, 
-        enum: ['Patient', 'Doctor', 'Nurse', 'Driver', 'worker', 'Service_Chief'], 
+        enum: ['Patient', 'Doctor', 'Nurse', 'Driver', 'worker', 'Chef'], 
         required: true 
     },
     password: { type: String, required: true },
+    country: { type: String },
+    city: { type: String },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date }
 }, { timestamps: true });

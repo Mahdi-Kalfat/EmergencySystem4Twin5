@@ -81,6 +81,8 @@ async function adduser(req, res, next) {
             phoneNumber: req.body.phoneNumber,
             email: req.body.email,
             role: req.body.role,
+            country: req.body.country,
+            city: req.body.city,
             password: cryPass,
         });
 
@@ -139,6 +141,8 @@ async function editUser(req, res, next) {
         user.phoneNumber = req.body.phoneNumber || user.phoneNumber;
         user.email = req.body.email || user.email;
         user.role = req.body.role || user.role;
+        user.country = req.body.country || user.country;
+        user.city = req.body.city || user.city;
 
         await user.save();
         if(oldRole !== newRole && oldRole == "Patient") {
@@ -237,10 +241,13 @@ async function displayUser(req, res, next) {
 
         const userDetailsList = await Promise.all(users.map(async (user) => {
             let userDetails = {
+                id: user._id,
                 name: user.name,
                 phoneNumber: user.phoneNumber,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                country: user.country,
+                city: user.city,
             };
 
             if (user.role === "Patient") {
@@ -347,10 +354,13 @@ async function login(req, res, next) {
             message: "User connected",
             auth_token: token,
             user: {
+                id: foundUser._id,
                 name: foundUser.name,
                 email: foundUser.email,
                 role: foundUser.role,
                 phone: foundUser.phoneNumber,
+                country: foundUser.country,
+                city: foundUser.city,
             },
         });
     } catch (error) {
@@ -527,10 +537,13 @@ async function findUserByEmail(req, res, next) {
         }
 
         const UserToSend = {
+            id: user._id,
             name: user.name,
             email: user.email,
             role: user.role,
             phoneNumber: user.phoneNumber,
+            city: user.city,
+            country: user.country,
         };
 
         const personal = await Personal.findOne({ id_personal: user._id });
@@ -588,5 +601,199 @@ async function findUserByEmail(req, res, next) {
 
 // End of Find User By Email Function
 
+//Start Of count Personelle function 
+async function countPersonelle(req, res, next) {
+    try {
+        const countd = await Doctor.countDocuments();
+        const countn = await Nurse.countDocuments();
+        const countdr = await Driver.countDocuments();
+        const countw = await Worker.countDocuments();
+        const countsc = await ServiceChief.countDocuments();
+        const count = countd + countn + countdr + countw + countsc;
 
-module.exports = { adduser , editUser , delUser , displayUser , login , forgetPassword , resetPassword,findUserByEmail };
+        res.json(count);
+    }catch (error) {
+        console.error('Error in findUserByEmail:', error);
+        res.status(500).json({ message: 'Error in findUserByEmail', error: error.message });
+    }
+}
+//End Of count Personelle function
+
+//Start Of count Patient function 
+async function countPatient(req, res, next) {
+    try {
+        const count = await Patient.countDocuments();
+        res.json(count);
+    }catch (error) {
+        console.error('Error in findUserByEmail:', error);
+        res.status(500).json({ message: 'Error in findUserByEmail', error: error.message });
+    }
+}
+//End Of count patient function
+
+async function editUserPersonalInfo(req, res, next) {
+    try {
+        const id = req.params.id;
+        const user = await User.findById(id);
+        const personal = await Personal.findOne({ id_personal: user._id });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        user.name = req.body.name || user.name;
+        user.phoneNumber = req.body.phoneNumber || user.phoneNumber;
+        user.email = user.email;
+        user.role = user.role;
+        user.country = user.country;
+        user.city = user.city;
+
+        await user.save();
+        
+        res.json({ message: "User info updated successfully" });
+    } catch (error) {
+        console.error('Error updating user:', error);
+        res.status(500).json({ message: 'Error updating user', error: error.message });
+    }
+}
+
+async function editUserAdresslInfo(req, res, next) {
+    try {
+        const id = req.params.id;
+        const user = await User.findById(id);
+        const personal = await Personal.findOne({ id_personal: user._id });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        user.name = user.name;
+        user.phoneNumber = user.phoneNumber;
+        user.email = user.email;
+        user.role = user.role;
+        user.country = req.body.country || user.country;
+        user.city = req.body.city || user.city;
+
+        await user.save();
+        
+        res.json({ message: "User adress updated successfully" });
+    } catch (error) {
+        console.error('Error updating user:', error);
+        res.status(500).json({ message: 'Error updating user', error: error.message });
+    }
+}
+
+async function editEmail(req, res, next) {
+    try {
+        const { oldEmail, newEmail } = req.body;
+
+        // Validate input
+        if (!oldEmail || !newEmail) {
+            return res.status(400).json({ message: "Both old and new email addresses are required." });
+        }
+
+        // Check if the old email exists in the database
+        const user = await User.findOne({ email: oldEmail });
+        if (!user) {
+            return res.status(404).json({ message: "Old email address not found." });
+        }
+
+        // Generate a token for email confirmation
+        const token = crypto.randomBytes(20).toString('hex');
+
+        // Save the token and expiration in the user's record
+        user.resetEmailToken = token;
+        user.resetEmailExpires = Date.now() + 3600000; // 1 hour
+        user.newEmail = newEmail; // Temporarily store the new email
+        await user.save();
+
+        // Configure the email transport
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: 'noreplay.infinitystack@gmail.com',
+                pass: 'dwpf ienb ltmg tvgb'
+            }
+        });
+
+        // Email content
+        const mailOptions = {
+            to: oldEmail,
+            from: 'noreplay.infinitystack@gmail.com',
+            subject: 'Email Change Confirmation',
+            html: `
+                <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                    <div style="background-color: #007BFF; padding: 20px; text-align: center; color: white;">
+                        <h1 style="margin: 0;">Hospital Emergency System</h1>
+                        <p style="margin: 5px 0 0;">Your safety and security are our priority.</p>
+                    </div>
+                    <div style="padding: 20px;">
+                        <h2 style="color: #007BFF;">Email Change Confirmation</h2>
+                        <p>Hello ${user.name},</p>
+                        <p>You requested to change your email address to <strong>${newEmail}</strong>.</p>
+                        <p>Please confirm this change by clicking the button below:</p>
+                        <a href="http://localhost:5173/confirmEmail/${token}" 
+                           style="display: inline-block; background-color: #007BFF; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 20px 0;">
+                            Confirm Email Change
+                        </a>
+                        <p>If the button above does not work, copy and paste the following link into your browser:</p>
+                        <p style="word-break: break-all;">http://localhost:5173/confirmEmail/${token}</p>
+                        <p>This link will expire in <strong>1 hour</strong>.</p>
+                        <p>If you did not make this request, please ignore this email.</p>
+                        <p>Stay safe,</p>
+                        <p><strong>Hospital Emergency System Team</strong></p>
+                    </div>
+                    <div style="background-color: #f8f9fa; padding: 10px; text-align: center; font-size: 12px; color: #666;">
+                        <p>This is an automated message. Please do not reply to this email.</p>
+                    </div>
+                </div>
+            `
+        };
+
+        // Send the email
+        transporter.sendMail(mailOptions, (err, response) => {
+            if (err) {
+                console.error('Error sending email:', err);
+                return res.status(500).json({ message: 'Failed to send confirmation email.', error: err.message });
+            } else {
+                res.status(200).json({ message: 'Confirmation email sent successfully.' });
+            }
+        });
+    } catch (error) {
+        console.error('Error in editEmail:', error);
+        res.status(500).json({ message: 'Error in editEmail', error: error.message });
+    }
+}
+
+async function confirmEmailChange(req, res, next) {
+    try {
+        const { token } = req.params;
+
+        // Find the user by the token and ensure it has not expired
+        const user = await User.findOne({
+            resetEmailToken: token,
+            resetEmailExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: "Email change token is invalid or has expired." });
+        }
+
+        // Update the email address
+        user.email = user.newEmail;
+        user.newEmail = undefined; // Clear the temporary new email
+        user.resetEmailToken = undefined;
+        user.resetEmailExpires = undefined;
+
+        await user.save();
+
+        res.status(200).json({ message: "Email updated successfully." });
+    } catch (error) {
+        console.error('Error in confirmEmailChange:', error);
+        res.status(500).json({ message: 'Error in confirmEmailChange', error: error.message });
+    }
+}
+
+
+
+
+
+module.exports = { adduser , editUser , delUser , displayUser , login , forgetPassword , resetPassword,findUserByEmail , countPersonelle , countPatient,editUserPersonalInfo , editUserAdresslInfo , editEmail, confirmEmailChange };
