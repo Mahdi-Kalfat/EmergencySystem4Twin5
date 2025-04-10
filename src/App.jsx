@@ -9,6 +9,7 @@ import ResetPass from './pages/resetPass'
 import AddPersonalForm from './pages/Personelle/AddPersonelle'
 import Profile from './pages/proflie/Profile'
 import Personelle from './pages/Personelle/Personelle'
+import EditPersonalForm from './pages/Personelle/EditPersonelle'
 function App() {
   const [count, setCount] = useState(0)
 
@@ -34,6 +35,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AddPersonalForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/editPersonelle"
+            element={
+              <ProtectedRoute>
+                <EditPersonalForm />
               </ProtectedRoute>
             }
           />
