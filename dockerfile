@@ -1,7 +1,7 @@
 FROM node:16-alpine
 WORKDIR /app
-COPY . /app
+COPY BackEnd/package*.json ./
 RUN npm install
-RUN npm run build-dev
-EXPOSE 5000
-CMD ["npm", "start"]
+COPY BackEnd/ .
+EXPOSE 3000
+CMD ["npm", "run", "dev"]
