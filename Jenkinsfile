@@ -4,6 +4,9 @@ pipeline {
     tools {
         nodejs "NodeJS"
     }
+    environment {
+        DOCKER_IMAGE = 'anasbettouzia/nodemongoapp:6.0'
+    }
 
     stages {
         stage('Checkout GIT') {
@@ -31,6 +34,22 @@ pipeline {
                     dir('BackEnd') {
                         sh 'npm test' 
                     }
+                }
+            }
+        }
+        stage('Deploy avec Docker Compose') {
+            steps {
+                script {
+                    sh 'docker pull $DOCKER_IMAGE'
+                    sh 'docker compose down || true'
+                    sh 'docker compose up -d'
+                }
+            }
+        }
+        stage('Vérification des conteneurs') {
+            steps {
+                script {
+                    sh 'docker ps'
                 }
             }
         }
