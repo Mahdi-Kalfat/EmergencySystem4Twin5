@@ -60,12 +60,10 @@ stage('Deploy to Nexus') {
         dir('BackEnd') {
             script {
                 def version = sh(script: 'node -p "require(\'./package.json\').version"', returnStdout: true).trim()
-                def packageFile = "emergencymanagementsystem-${version}.tgz"
-                
-                // Vérification du fichier généré
-                sh "ls -la ${packageFile}"
+                def packageFile = sh(script: 'ls *.tgz', returnStdout: true).trim()
 
-                // Upload vers Nexus
+                echo "Uploading file: ${packageFile} to Nexus"
+
                 nexusArtifactUploader(
                     nexusVersion: 'nexus3',
                     protocol: 'http',
