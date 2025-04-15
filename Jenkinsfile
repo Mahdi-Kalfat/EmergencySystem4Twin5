@@ -34,51 +34,59 @@ pipeline {
         stage('Run Tests - Backend') {
             steps {
                 dir('BackEnd') {
+                    // Ajoutez des tests ou retirez cette étape si vous n'en avez pas
                     sh 'echo "No tests configured"'
                 }
             }
         }
 
-        stage('Pack NodeJS Project') {
-            steps {
-                dir('BackEnd') {
-                    // D'abord incrémenter la version
-                    sh 'npm version patch --no-git-tag-version'
-                    
-                    // Ensuite pack avec la nouvelle version
-                    sh 'npm pack'
-                    
-                    // Vérification du fichier généré
-                    sh 'ls -la *.tgz'
-                    archiveArtifacts artifacts: '*.tgz', fingerprint: true
-                }
-            }
+stage('Pack NodeJS Project') {
+    steps {
+        dir('BackEnd') {
+            // D'abord pack pour créer le .tgz avec la version actuelle
+            sh 'npm pack'
+            
+            // Ensuite incrémenter la version pour le prochain build
+            sh 'npm version patch --no-git-tag-version'
+            
+            // Archiver le fichier généré
+            archiveArtifacts artifacts: '*.tgz', fingerprint: true
         }
+    }
+}
 
-        stage('Deploy to Nexus') {
-            steps {
-                dir('BackEnd') {
-                    script {
-                        // Récupérer la version exacte
-                        def version = sh(script: 'node -p "require(\'./package.json\').version"', returnStdout: true).trim()
-                        def packageFile = "emergencymanagementsystem-${version}.tgz"
-                        
-                        // Solution alternative avec curl pour npm registry
-                        sh """
-                            curl -v -u ${NEXUS_CREDENTIALS} \
-                            -X POST \
-                            -H 'Content-Type: application/octet-stream' \
-                            --data-binary @${packageFile} \
-                            "http://${env.NEXUS_URL}/repository/${env.NEXUS_REPO}/"
-                        """
-                        
-                        // Alternative 2: Utilisation de npm publish si configuré
-                        // sh 'npm config set registry http://${env.NEXUS_URL}/repository/${env.NEXUS_REPO}/'
-                        // sh 'npm publish --registry=http://${env.NEXUS_URL}/repository/${env.NEXUS_REPO}/'
-                    }
-                }
+stage('Deploy to Nexus') {
+    steps {
+        dir('BackEnd') {
+            script {
+                // Récupérer la version AVANT l'incrément (version du fichier généré)
+                def version = sh(script: 'node -p "require(\'./package.json\').version"', returnStdout: true).trim()
+                def packageFile = "emergencymanagementsystem-${version}.tgz"
+                
+                // Vérifier que le fichier existe bien
+                sh "ls -la ${packageFile} || echo 'Fichier non trouvé'"
+                
+                nexusArtifactUploader(
+                    nexusVersion: 'nexus3',
+                    protocol: 'http',
+                    nexusUrl: "${env.NEXUS_URL}",  
+                    groupId: 'emergency',
+                    version: "${version}",  
+                    repository: "${env.NEXUS_REPO}",  
+                    credentialsId: 'deploymentRepo',  
+                    artifacts: [
+                        [
+                            artifactId: 'emergencymanagementsystem',
+                            classifier: '',
+                            file: "${packageFile}",  
+                            type: 'tgz'
+                        ]
+                    ]
+                )
             }
         }
+    }
+}
 
         stage('Analyse SonarQube') {
             steps {
