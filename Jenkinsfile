@@ -45,35 +45,42 @@ pipeline {
             }
         }
 
-        stage('Upload to Nexus') {
-            steps {
-                dir('BackEnd') {
-                    script {
-                        def packageName = sh(script: "node -p \"require('./package.json').name\"", returnStdout: true).trim()
-                        def packageVersion = sh(script: "node -p \"require('./package.json').version\"", returnStdout: true).trim()
-                        def tgzFile = "${packageName}-${packageVersion}.tgz"
-
-                        nexusArtifactUploader(
-                            nexusVersion: 'nexus3',
-                            protocol: 'http',
-                            nexusUrl: '172.20.116.17:8081',
-                            groupId: 'com.nodejs.emergency',
-                            version: packageVersion,
-                            repository: 'npm-piweb',
-                            credentialsId: 'deploymentRepo',
-                            artifacts: [
-                                [
-                                    artifactId: packageName,
-                                    classifier: '',
-                                    file: tgzFile,
-                                    type: 'tgz'
-                                ]
-                            ]
-                        )
-                    }
+stage('Upload to Nexus') {
+    steps {
+        dir('BackEnd') {
+            script {
+                def packageName = sh(script: "node -p \"require('./package.json').name\"", returnStdout: true).trim()
+                def packageVersion = sh(script: "node -p \"require('./package.json').version\"", returnStdout: true).trim()
+                def tgzFile = "${packageName}-${packageVersion}.tgz"
+                
+                // Add verification
+                if (!fileExists(tgzFile)) {
+                    error("File ${tgzFile} not found!")
                 }
+                
+                echo "Attempting to upload ${tgzFile} to Nexus"
+                
+                nexusArtifactUploader(
+                    nexusVersion: 'nexus3',
+                    protocol: 'http',
+                    nexusUrl: '172.20.116.17:8081',
+                    groupId: 'com.nodejs.emergency',
+                    version: packageVersion,
+                    repository: 'npm-piweb',
+                    credentialsId: 'deploymentRepo',
+                    artifacts: [
+                        [
+                            artifactId: packageName,
+                            classifier: '',
+                            file: tgzFile,
+                            type: 'tgz'
+                        ]
+                    ]
+                )
             }
         }
+    }
+}
 
         stage('Analyse SonarQube') {
             steps {
