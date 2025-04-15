@@ -46,66 +46,95 @@ stage('Pack NodeJS Project') {
         }
     }
 }
+        stage('Verify Nexus Configuration') {
+    steps {
+        script {
+            withCredentials([usernamePassword(
+                credentialsId: 'deploymentRepo',
+                usernameVariable: 'admin',
+                passwordVariable: 'admin123'
+            )]) {
+                sh """
+                    echo "Testing Nexus connection and repository..."
+                    # Check if repository exists
+                    curl -v -u ${NEXUS_USER}:${NEXUS_PASS} \
+                    -X GET \
+                    "http://172.20.116.17:8081/service/rest/v1/repositories/npm-piweb" \
+                    || echo "Repository check failed"
+                    
+                    # Check upload permissions
+                    echo "Testing upload permissions..."
+                    echo "test" > test.txt
+                    curl -v -u ${NEXUS_USER}:${NEXUS_PASS} \
+                    --upload-file test.txt \
+                    "http://172.20.116.17:8081/repository/npm-piweb/test.txt" \
+                    || echo "Upload test failed"
+                """
+            }
+        }
+    }
+}
 
 stage('Upload to Nexus') {
     steps {
         dir('BackEnd') {
             script {
-                // Get package info - using readJSON is more reliable
                 def packageJson = readJSON file: 'package.json'
                 def packageName = packageJson.name
                 def packageVersion = packageJson.version
-                def tgzFile = "emergencymanagementsystem-${packageVersion}.tgz" // Use exact filename
+                def tgzFile = "emergencymanagementsystem-${packageVersion}.tgz"
                 
-                // Verify file exists
-                if (!fileExists(tgzFile)) {
-                    error("ERROR: Package file ${tgzFile} not found! Available files:\n${sh(script: 'ls -la', returnStdout: true)}")
+                // Enhanced file verification
+                def fileSize = sh(script: "stat -c%s ${tgzFile}", returnStdout: true).trim()
+                if (fileSize.toInteger() == 0) {
+                    error("ERROR: Package file ${tgzFile} is empty!")
                 }
                 
-                echo "Package file ${tgzFile} exists (size: ${sh(script: "du -h ${tgzFile}", returnStdout: true).trim()}), preparing to upload"
+                echo "Uploading ${tgzFile} (size: ${fileSize} bytes) to Nexus"
                 
-                // Test Nexus connection first
-                withCredentials([usernamePassword(
-                    credentialsId: 'deploymentRepo',
-                    usernameVariable: 'NEXUS_USER',
-                    passwordVariable: 'NEXUS_PASS'
-                )]) {
-                    sh """
-                        echo "Testing Nexus connection..."
-                        curl -v -u ${NEXUS_USER}:${NEXUS_PASS} \
-                        -X GET \
-                        http://172.20.116.17:8081/service/rest/v1/repositories \
-                        || echo "Connection test failed"
-                    """
-                }
-
-                // Try uploading with timeout
-                timeout(time: 5, unit: 'MINUTES') {
-                    try {
-                        nexusArtifactUploader(
-                            nexusVersion: 'nexus3',
-                            protocol: 'http',
-                            nexusUrl: '172.20.116.17:8081',
-                            groupId: 'emergency', // Simplified groupId for npm
-                            version: packageVersion,
-                            repository: 'npm-piweb',
-                            credentialsId: 'deploymentRepo',
-                            artifacts: [
-                                [
-                                    artifactId: packageName,
-                                    classifier: '',
-                                    file: tgzFile,
-                                    type: 'tgz'
-                                ]
+                // Option 1: Using nexusArtifactUploader with enhanced logging
+                try {
+                    nexusArtifactUploader(
+                        nexusVersion: 'nexus3',
+                        protocol: 'http',
+                        nexusUrl: '172.20.116.17:8081',
+                        groupId: 'emergency',
+                        version: packageVersion,
+                        repository: 'npm-piweb',
+                        credentialsId: 'deploymentRepo',
+                        artifacts: [
+                            [
+                                artifactId: packageName,
+                                classifier: '',
+                                file: tgzFile,
+                                type: 'tgz'
                             ]
-                        )
-                        echo "Successfully uploaded ${tgzFile} to Nexus"
-                    } catch (Exception e) {
-                        error("Failed to upload to Nexus: ${e.toString()}\n" +
-                              "Verify:\n" +
-                              "1. Repository 'npm-piweb' exists and is npm type\n" +
-                              "2. Credentials have write permissions\n" +
-                              "3. Nexus URL is correct")
+                        ]
+                    )
+                    echo "Upload successful through nexusArtifactUploader"
+                } catch (Exception e) {
+                    echo "nexusArtifactUploader failed, falling back to direct upload"
+                    
+                    // Option 2: Direct cURL upload as fallback
+                    withCredentials([usernamePassword(
+                        credentialsId: 'deploymentRepo',
+                        usernameVariable: 'admin',
+                        passwordVariable: 'admin123'
+                    )]) {
+                        def uploadStatus = sh(
+                            script: """
+                                curl -v -u ${NEXUS_USER}:${NEXUS_PASS} \
+                                --upload-file ${tgzFile} \
+                                "http://172.20.116.17:8081/repository/npm-piweb/${tgzFile}" \
+                                -w "%{http_code}" -o /dev/null
+                            """,
+                            returnStdout: true
+                        ).trim()
+                        
+                        if (uploadStatus != "200" && uploadStatus != "201") {
+                            error("Direct upload failed with HTTP status ${uploadStatus}")
+                        }
+                        echo "Direct upload successful (HTTP ${uploadStatus})"
                     }
                 }
             }
