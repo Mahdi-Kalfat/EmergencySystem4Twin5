@@ -51,19 +51,34 @@ stage('Upload to Nexus') {
     steps {
         dir('BackEnd') {
             script {
-                // Get package info
+                // Get package info - using readJSON is more reliable
                 def packageJson = readJSON file: 'package.json'
                 def packageName = packageJson.name
                 def packageVersion = packageJson.version
-                def tgzFile = "${packageName}-${packageVersion}.tgz"
+                def tgzFile = "emergencymanagementsystem-${packageVersion}.tgz" // Use exact filename
                 
                 // Verify file exists
                 if (!fileExists(tgzFile)) {
-                    error("ERROR: Package file ${tgzFile} not found!")
+                    error("ERROR: Package file ${tgzFile} not found! Available files:\n${sh(script: 'ls -la', returnStdout: true)}")
                 }
                 
-                echo "Package file ${tgzFile} exists, preparing to upload"
+                echo "Package file ${tgzFile} exists (size: ${sh(script: "du -h ${tgzFile}", returnStdout: true).trim()}), preparing to upload"
                 
+                // Test Nexus connection first
+                withCredentials([usernamePassword(
+                    credentialsId: 'deploymentRepo',
+                    usernameVariable: 'NEXUS_USER',
+                    passwordVariable: 'NEXUS_PASS'
+                )]) {
+                    sh """
+                        echo "Testing Nexus connection..."
+                        curl -v -u ${NEXUS_USER}:${NEXUS_PASS} \
+                        -X GET \
+                        http://172.20.116.17:8081/service/rest/v1/repositories \
+                        || echo "Connection test failed"
+                    """
+                }
+
                 // Try uploading with timeout
                 timeout(time: 5, unit: 'MINUTES') {
                     try {
@@ -71,7 +86,7 @@ stage('Upload to Nexus') {
                             nexusVersion: 'nexus3',
                             protocol: 'http',
                             nexusUrl: '172.20.116.17:8081',
-                            groupId: 'com.nodejs.emergency',
+                            groupId: 'emergency', // Simplified groupId for npm
                             version: packageVersion,
                             repository: 'npm-piweb',
                             credentialsId: 'deploymentRepo',
@@ -86,7 +101,11 @@ stage('Upload to Nexus') {
                         )
                         echo "Successfully uploaded ${tgzFile} to Nexus"
                     } catch (Exception e) {
-                        error("Failed to upload to Nexus: ${e.toString()}")
+                        error("Failed to upload to Nexus: ${e.toString()}\n" +
+                              "Verify:\n" +
+                              "1. Repository 'npm-piweb' exists and is npm type\n" +
+                              "2. Credentials have write permissions\n" +
+                              "3. Nexus URL is correct")
                     }
                 }
             }
