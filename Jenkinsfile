@@ -57,7 +57,7 @@ pipeline {
             }
         }
 
-        stage('Déploiement Docker Compose') {
+     /*   stage('Déploiement Docker Compose') {
             steps {
                 script {
                     dir('BackEnd') {
@@ -67,7 +67,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
 
         stage('Vérification des conteneurs') {
             steps {
