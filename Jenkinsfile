@@ -59,34 +59,33 @@ stage('Deploy to Nexus') {
     steps {
         dir('BackEnd') {
             script {
-                // Récupérer la version AVANT l'incrément (version du fichier généré)
                 def version = sh(script: 'node -p "require(\'./package.json\').version"', returnStdout: true).trim()
                 def packageFile = "emergencymanagementsystem-${version}.tgz"
                 
-                // Vérifier que le fichier existe bien
-                sh "ls -la ${packageFile} || echo 'Fichier non trouvé'"
-                
+                // Vérification du fichier généré
+                sh "ls -la ${packageFile}"
+
+                // Upload vers Nexus
                 nexusArtifactUploader(
                     nexusVersion: 'nexus3',
                     protocol: 'http',
-                    nexusUrl: "${env.NEXUS_URL}",  
+                    nexusUrl: "${env.NEXUS_URL}",
                     groupId: 'emergency',
-                    version: "${version}",  
-                    repository: "${env.NEXUS_REPO}",  
-                    credentialsId: 'deploymentRepo',  
-                    artifacts: [
-                        [
-                            artifactId: 'emergencymanagementsystem',
-                            classifier: '',
-                            file: "${packageFile}",  
-                            type: 'tgz'
-                        ]
-                    ]
+                    version: "${version}",
+                    repository: "${env.NEXUS_REPO}",
+                    credentialsId: 'deploymentRepo',
+                    artifacts: [[
+                        artifactId: 'emergencymanagementsystem',
+                        classifier: '',
+                        file: "${packageFile}",
+                        type: 'tgz'
+                    ]]
                 )
             }
         }
     }
 }
+
 
         stage('Analyse SonarQube') {
             steps {
