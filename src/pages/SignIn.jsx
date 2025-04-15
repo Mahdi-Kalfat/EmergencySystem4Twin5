@@ -47,7 +47,7 @@ const SignIn = () => {
       }
 
       try {
-        const response = await fetch("http://localhost:3000/users/login", {
+        const response = await fetch("http://localhost:3001/users/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password, recaptchaToken }), // Include reCAPTCHA token
@@ -78,7 +78,7 @@ const SignIn = () => {
     setEmailError("");
 
     try {
-      const response = await fetch("http://localhost:3000/users/forgetPassword", {
+      const response = await fetch("http://localhost:3001/users/forgetPassword", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: forgotPasswordEmail }),

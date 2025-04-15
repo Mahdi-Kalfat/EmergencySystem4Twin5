@@ -5,18 +5,24 @@ import {
   faTrash,
   faPlus,
   faEye,
+  faSearch,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
-import SideBar from "../../components/SideBar"; // Ajustez le chemin si nécessaire
-import Header from "../../components/Header"; // Ajustez le chemin si nécessaire
-import PatientInfoModal from "./PatientInfoModal"; // Ajustez le chemin si nécessaire
+import SideBar from "../../components/SideBar";
+import Header from "../../components/Header";
+import PatientInfoModal from "./PatientInfoModal";
 
 const Patient = () => {
   const [sidebarToggle, setSidebarToggle] = useState(false);
   const [patients, setPatients] = useState([]);
+  const [filteredPatients, setFilteredPatients] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [searchQuery, setSearchQuery] = useState(""); // Search field
+  const [isLoading, setIsLoading] = useState(true); // Loading state
+  const [debouncedQuery, setDebouncedQuery] = useState(""); // Debounced query for search
   const navigate = useNavigate();
 
+  // Fetch patients from the API
   useEffect(() => {
     const fetchPatients = async () => {
       try {
@@ -24,8 +30,7 @@ const Patient = () => {
           .split("; ")
           .find((row) => row.startsWith("token="))
           ?.split("=")[1];
-
-        const response = await fetch("http://localhost:3000/users//display", {
+        const response = await fetch("http://localhost:3001/users/display", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -38,18 +43,37 @@ const Patient = () => {
         }
 
         const data = await response.json();
-
-        // Filtrer les utilisateurs pour ne garder que les patients
         const filteredPatients = data.filter((user) => user.role === "Patient");
-
         setPatients(filteredPatients);
+        setFilteredPatients(filteredPatients); // Initially, show all patients
       } catch (error) {
         console.error("Error fetching patients:", error);
+      } finally {
+        setIsLoading(false); // Stop loading after fetching is complete
       }
     };
 
     fetchPatients();
   }, []);
+
+  // Debounce search query
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 500); // 500ms delay to reduce API calls
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  // Update the filtered results based on the debounced search query
+  useEffect(() => {
+    const result = patients.filter(
+      (patient) =>
+        patient.name.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
+        patient.email.toLowerCase().includes(debouncedQuery.toLowerCase())
+    );
+    setFilteredPatients(result);
+  }, [debouncedQuery, patients]);
 
   const handleAddClick = () => {
     navigate("/addpatient");
@@ -57,7 +81,7 @@ const Patient = () => {
 
   const handleViewClick = async (email) => {
     try {
-      const response = await fetch(`http://localhost:3000/users/findBymail`, {
+      const response = await fetch(`http://localhost:3001/users/findBymail`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -72,27 +96,59 @@ const Patient = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch patient details");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to fetch patient details");
       }
 
       const patientData = await response.json();
       setSelectedPatient(patientData);
     } catch (error) {
       console.error("Error fetching patient details:", error);
+      alert(`Error: ${error.message}`);
     }
   };
 
-  const getImageByRole = (role) => {
-    switch (role) {
-      case "Patient":
-        return "public/avatar/patient.png"; // Remplacez par le chemin de l'image pour les patients
-      default:
-        return "src/images/user/default.jpg";
+  const handleDeleteClick = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this patient?")) {
+      return;
     }
+
+    try {
+      const token = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("token="))
+        ?.split("=")[1];
+
+      const response = await fetch(`http://localhost:3001/users/delete/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete patient");
+      }
+
+      // Remove the deleted patient from the state
+      setPatients((prevPatients) =>
+        prevPatients.filter((patient) => patient.id !== id)
+      );
+
+      alert("Patient deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting patient:", error);
+      alert("Failed to delete patient. Please try again.");
+    }
+  };
+
+  const getImageByRole = () => {
+    return "public/avatar/patient.png"; // Default avatar for patient
   };
 
   return (
-    <div className="app-container">
+    <div className="app-container bg-gray-100 min-h-screen">
       <div className="sidebar-container">
         <SideBar
           sidebarToggle={sidebarToggle}
@@ -100,100 +156,106 @@ const Patient = () => {
         />
       </div>
 
-      <div className="content-container">
+      <div className="content-container flex flex-col min-h-screen">
         <Header
           sidebarToggle={sidebarToggle}
           setSidebarToggle={setSidebarToggle}
         />
 
-        <div className="space-y-5 sm:space-y-6">
-          <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-            <div className="px-5 py-4 sm:px-6 sm:py-5 flex justify-between items-center">
-              <h3 className="text-base font-medium text-gray-800 dark:text-white/90">
-                List Patients
+        <div className="px-4 sm:px-6 pt-6 flex-grow">
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-semibold text-gray-800 dark:text-white">
+                List of Patients
               </h3>
               <button
-                className="px-2 py-1 text-white bg-green-500 rounded hover:bg-green-600"
+                className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-all"
                 onClick={handleAddClick}
               >
-                <FontAwesomeIcon icon={faPlus} />
+                <FontAwesomeIcon icon={faPlus} className="mr-2" />
+                Add Patient
               </button>
             </div>
 
-            <div className="p-5 border-t border-gray-100 dark:border-gray-800 sm:p-6">
-              <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-                <div className="max-w-full overflow-x-auto">
-                  <table className="min-w-full table-fixed border-collapse border border-gray-200">
-                    <thead className="bg-gray-100">
-                      <tr className="border-b border-gray-200 dark:border-gray-800">
-                        <th className="px-5 py-3 sm:px-6 text-center w-1/4">
-                          Image
-                        </th>
-                        <th className="px-5 py-3 sm:px-6 text-center w-1/4">
-                          Name
-                        </th>
-                        <th className="px-5 py-3 sm:px-6 text-center w-1/4">
-                          Email
-                        </th>
-                        <th className="px-5 py-3 sm:px-6 text-center w-1/4">
-                          Action
-                        </th>
-                      </tr>
-                    </thead>
+            {/* Search Field */}
+            <div className="relative mb-6">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500"
+                placeholder="Search patients by name or email..."
+              />
+              <FontAwesomeIcon
+                icon={faSearch}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400"
+              />
+            </div>
 
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                      {patients.length > 0 ? (
-                        patients.map((user) => (
-                          <tr key={user.id} className="text-center">
-                            <td className="px-5 py-4 sm:px-6">
-                              <div className="w-10 h-10 rounded-full overflow-hidden mx-auto">
-                                <img
-                                  src={getImageByRole(user.role)}
-                                  alt="Patient"
-                                  className="w-100 h-100 object-cover"
-                                />
-                              </div>
-                            </td>
-                            <td className="px-5 py-4 sm:px-6">
-                              <div className="flex flex-col items-center">
-                                <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                                  {user.name}
-                                </span>
-                                <span className="block text-gray-500 text-theme-xs dark:text-gray-400">
-                                  {user.phoneNumber}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="px-5 py-4 sm:px-6">{user.email}</td>
-                            <td className="px-5 py-4 sm:px-6">
-                              <div className="flex justify-center gap-2">
-                                <button className="px-2 py-1 text-white bg-blue-500 rounded hover:bg-blue-600">
-                                  <FontAwesomeIcon icon={faEdit} />
-                                </button>
-                                <button className="px-2 py-1 text-white bg-red-500 rounded hover:bg-red-600">
-                                  <FontAwesomeIcon icon={faTrash} />
-                                </button>
-                                <button
-                                  className="px-2 py-1 text-white bg-green-500 rounded hover:bg-green-600"
-                                  onClick={() => handleViewClick(user.email)}
-                                >
-                                  <FontAwesomeIcon icon={faEye} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan="4" className="text-center py-4">
-                            No patients found
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+            {/* Patients List */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {isLoading ? (
+                <div className="col-span-full text-center py-6">
+                  Loading patients...
                 </div>
-              </div>
+              ) : filteredPatients.length > 0 ? (
+                filteredPatients.map((user) => (
+                  <div
+                    key={user.id}
+                    className="bg-white rounded-lg shadow-md p-4 transition-all hover:shadow-xl"
+                  >
+                    <div className="flex flex-col items-center">
+                      <div className="w-24 h-24 rounded-full overflow-hidden mb-4">
+                        <img
+                          src={getImageByRole()}
+                          alt="Patient"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                        {user.name}
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {user.email}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {user.phoneNumber}
+                      </p>
+
+                      <div className="flex justify-center gap-4 mt-6">
+                        <button
+                          className="px-4 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-all"
+                          onClick={() =>
+                            navigate("/editPatient", {
+                              state: { patient: user },
+                            })
+                          }
+                        >
+                          <FontAwesomeIcon icon={faEdit} />
+                        </button>
+
+                        <button
+                          className="px-4 py-2 text-white bg-red-500 rounded-md hover:bg-red-600 transition-all"
+                          onClick={() => handleDeleteClick(user.id)}
+                        >
+                          <FontAwesomeIcon icon={faTrash} />
+                        </button>
+
+                        <button
+                          className="px-4 py-2 text-white bg-green-500 rounded-md hover:bg-green-600 transition-all"
+                          onClick={() => handleViewClick(user.email)}
+                        >
+                          <FontAwesomeIcon icon={faEye} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-6">
+                  No patients found
+                </div>
+              )}
             </div>
           </div>
         </div>

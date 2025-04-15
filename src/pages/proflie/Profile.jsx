@@ -268,7 +268,7 @@ const Profile = () => {
                   // Save to database
                   const userId = userData.id; // Get the connected user's ID
                   await axios.put(
-                    `http://localhost:3000/users/updateUserInfo/${userId}`,
+                    `http://localhost:3001/users/updateUserInfo/${userId}`,
                     { name: tempUser.name, phoneNumber: tempUser.phone },
                     {
                       headers: {
@@ -351,7 +351,7 @@ const Profile = () => {
                   // Save to database
                   const userId = userData.id; // Get the connected user's ID
                   await axios.put(
-                    `http://localhost:3000/users/updateUserAddress/${userId}`,
+                    `http://localhost:3001/users/updateUserAddress/${userId}`,
                     { country: tempAddress.country, cityState: tempAddress.cityState },
                     {
                       headers: {

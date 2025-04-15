@@ -37,7 +37,7 @@ const EditPersonalForm = () => {
         }
 
         const response = await axios.post(
-            `http://localhost:3000/users/findBymail`,
+            `http://localhost:3001/users/findBymail`,
             { email: emailSent }, // Pass the email in the request body
             {
               headers: {
@@ -199,7 +199,7 @@ const EditPersonalForm = () => {
         throw new Error("No token found in cookies. Please log in.");
       }
 
-      const response = await axios.put(`http://localhost:3000/users/editUser/${id}`, personalData, {
+      const response = await axios.put(`http://localhost:3001/users/editUser/${id}`, personalData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

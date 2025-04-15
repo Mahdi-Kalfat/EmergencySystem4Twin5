@@ -42,7 +42,7 @@ const AddPatientForm = () => {
     };
 
     try {
-      const response = await fetch("http://localhost:3000/users/adduser", {
+      const response = await fetch("http://localhost:3001/users/adduser", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

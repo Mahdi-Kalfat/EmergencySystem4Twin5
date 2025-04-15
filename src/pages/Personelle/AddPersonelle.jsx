@@ -142,7 +142,7 @@ const AddPersonalForm = () => {
         throw new Error("No token found in cookies. Please log in.");
       }
 
-      const response = await axios.post("http://localhost:3000/users/addUser", personalData, {
+      const response = await axios.post("http://localhost:3001/users/addUser", personalData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

@@ -1,38 +1,41 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 
-const PatientInfoModal = ({ patient, onClose }) => {
+const PatientDetails = () => {
+  const { patientId } = useParams(); // Get patientId from URL
+  const [patient, setPatient] = useState(null);
+
+  useEffect(() => {
+    const fetchPatient = async () => {
+      const response = await fetch(`http://localhost:3001/users/findBymail`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: patientId }), // You can change this logic to match the ID
+      });
+
+      const data = await response.json();
+      setPatient(data);
+    };
+
+    fetchPatient();
+  }, [patientId]);
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-white p-6 rounded-lg w-11/12 max-w-md">
-        <h2 className="text-xl font-bold mb-4">Patient Details</h2>
-        <div className="space-y-4">
-          <p>
-            <strong>Name:</strong> {patient.name}
-          </p>
-          <p>
-            <strong>Email:</strong> {patient.email}
-          </p>
-          <p>
-            <strong>Phone Number:</strong> {patient.phoneNumber}
-          </p>
-          <p>
-            <strong>Allergies:</strong>{" "}
-            {patient.allergies?.join(", ") || "None"}
-          </p>
-          <p>
-            <strong>Chronic Diseases:</strong>{" "}
-            {patient.chronicDiseases?.join(", ") || "None"}
-          </p>
+    <div>
+      {patient ? (
+        <div>
+          <h2>{patient.name}</h2>
+          <p>Email: {patient.email}</p>
+          <p>Phone: {patient.phoneNumber}</p>
+          {/* Add other patient details here */}
         </div>
-        <button
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          onClick={onClose}
-        >
-          Close
-        </button>
-      </div>
+      ) : (
+        <p>Loading...</p>
+      )}
     </div>
   );
 };
 
-export default PatientInfoModal;
+export default PatientDetails;

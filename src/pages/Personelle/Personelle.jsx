@@ -20,7 +20,7 @@ const Personelle = () => {
     try {
       const token = document.cookie.split("; ").find(row => row.startsWith("token="))?.split("=")[1];
 
-      const response = await fetch("http://localhost:3000/users/display", {
+      const response = await fetch("http://localhost:3001/users/display", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -58,7 +58,7 @@ const Personelle = () => {
 
   const handleViewClick = async (email) => {
     try {
-      const response = await fetch(`http://localhost:3000/users/findBymail`, {
+      const response = await fetch(`http://localhost:3001/users/findBymail`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -95,7 +95,7 @@ const Personelle = () => {
       try {
         const token = document.cookie.split("; ").find(row => row.startsWith("token="))?.split("=")[1];
 
-        const response = await fetch(`http://localhost:3000/users/deleteUser/${userId}`, {
+        const response = await fetch(`http://localhost:3001/users/deleteUser/${userId}`, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",

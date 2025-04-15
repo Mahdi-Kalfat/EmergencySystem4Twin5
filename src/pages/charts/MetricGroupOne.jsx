@@ -9,7 +9,7 @@ export default function MetricGroupOne() {
     try {
       const token = document.cookie.split("; ").find(row => row.startsWith("token="))?.split("=")[1];
 
-      const response = await fetch("http://localhost:3000/users/countPatient", {
+      const response = await fetch("http://localhost:3001/users/countPatient", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -31,7 +31,7 @@ export default function MetricGroupOne() {
     try {
       const token = document.cookie.split("; ").find(row => row.startsWith("token="))?.split("=")[1];
 
-      const response = await fetch("http://localhost:3000/users/countPersonel", {
+      const response = await fetch("http://localhost:3001/users/countPersonel", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
