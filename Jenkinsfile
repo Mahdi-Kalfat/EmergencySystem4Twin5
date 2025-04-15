@@ -38,6 +38,42 @@ pipeline {
                 }
             }
         }
+            stage('Pack NodeJS Project') {
+      steps {
+        dir('BackEnd') {
+          sh 'npm pack'
+        }
+      }
+    }
+    stage('Upload to Nexus') {
+      steps {
+        script {
+          dir('BackEnd') {
+            def packageName = sh(script: "node -p \"require('./package.json').name\"", returnStdout: true).trim()
+            def packageVersion = sh(script: "node -p \"require('./package.json').version\"", returnStdout: true).trim()
+            def tgzFile = "${packageName}-${packageVersion}.tgz"
+
+            nexusArtifactUploader(
+              nexusVersion: 'nexus3',
+              protocol: 'http',
+              nexusUrl: '172.20.116.17:8081',
+              groupId: 'com.nodejs.emergency',
+              version: packageVersion,
+              repository: 'npm-piweb', 
+              credentialsId: 'deploymentRepo', 
+              artifacts: [
+                [
+                  artifactId: packageName,
+                  classifier: '',
+                  file: tgzFile,
+                  type: 'tgz'
+                ]
+              ]
+            )
+          }
+        }
+      }
+    }
 
         stage('Analyse SonarQube') {
             steps {
