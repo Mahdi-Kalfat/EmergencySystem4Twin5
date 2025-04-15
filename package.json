@@ -19,5 +19,8 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "~1.9.1",
     "nodemailer": "^6.10.0"
-  }
+  },
+  "publishConfig": {
+  "registry": "http://172.20.116.17:8081/repository/npm-piweb/"
+}
 }
