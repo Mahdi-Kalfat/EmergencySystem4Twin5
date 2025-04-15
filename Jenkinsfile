@@ -37,46 +37,58 @@ pipeline {
             }
         }
 
-        stage('Pack NodeJS Project') {
-            steps {
-                dir('BackEnd') {
-                    sh 'npm pack'
-                }
-            }
+stage('Pack NodeJS Project') {
+    steps {
+        dir('BackEnd') {
+            sh 'ls -la' // Show files before packing
+            sh 'npm pack'
+            sh 'ls -la' // Show files after packing
         }
+    }
+}
 
 stage('Upload to Nexus') {
     steps {
         dir('BackEnd') {
             script {
-                def packageName = sh(script: "node -p \"require('./package.json').name\"", returnStdout: true).trim()
-                def packageVersion = sh(script: "node -p \"require('./package.json').version\"", returnStdout: true).trim()
+                // Get package info
+                def packageJson = readJSON file: 'package.json'
+                def packageName = packageJson.name
+                def packageVersion = packageJson.version
                 def tgzFile = "${packageName}-${packageVersion}.tgz"
                 
-                // Add verification
+                // Verify file exists
                 if (!fileExists(tgzFile)) {
-                    error("File ${tgzFile} not found!")
+                    error("ERROR: Package file ${tgzFile} not found!")
                 }
                 
-                echo "Attempting to upload ${tgzFile} to Nexus"
+                echo "Package file ${tgzFile} exists, preparing to upload"
                 
-                nexusArtifactUploader(
-                    nexusVersion: 'nexus3',
-                    protocol: 'http',
-                    nexusUrl: '172.20.116.17:8081',
-                    groupId: 'com.nodejs.emergency',
-                    version: packageVersion,
-                    repository: 'npm-piweb',
-                    credentialsId: 'deploymentRepo',
-                    artifacts: [
-                        [
-                            artifactId: packageName,
-                            classifier: '',
-                            file: tgzFile,
-                            type: 'tgz'
-                        ]
-                    ]
-                )
+                // Try uploading with timeout
+                timeout(time: 5, unit: 'MINUTES') {
+                    try {
+                        nexusArtifactUploader(
+                            nexusVersion: 'nexus3',
+                            protocol: 'http',
+                            nexusUrl: '172.20.116.17:8081',
+                            groupId: 'com.nodejs.emergency',
+                            version: packageVersion,
+                            repository: 'npm-piweb',
+                            credentialsId: 'deploymentRepo',
+                            artifacts: [
+                                [
+                                    artifactId: packageName,
+                                    classifier: '',
+                                    file: tgzFile,
+                                    type: 'tgz'
+                                ]
+                            ]
+                        )
+                        echo "Successfully uploaded ${tgzFile} to Nexus"
+                    } catch (Exception e) {
+                        error("Failed to upload to Nexus: ${e.toString()}")
+                    }
+                }
             }
         }
     }
