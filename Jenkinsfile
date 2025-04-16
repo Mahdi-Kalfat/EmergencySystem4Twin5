@@ -18,16 +18,16 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies - Backend') {
-            steps {
-                script {
-                    dir('BackEnd') {
-                        sh 'rm -rf node_modules package-lock.json' 
-                        sh 'npm install'  
-                    }
-                }
+stage('Install Dependencies - Backend') {
+    steps {
+        script {
+            dir('BackEnd') {
+                sh 'rm -rf node_modules package-lock.json' 
+                sh 'npm install --registry=https://registry.npmjs.org'  
             }
         }
+    }
+}
 
         stage('Run Tests - Backend') {
             steps {
