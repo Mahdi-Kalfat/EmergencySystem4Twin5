@@ -61,11 +61,13 @@ pipeline {
 
         stage('Deploy avec Docker Compose') {
             steps {
+                                dir('BackEnd') {
                 script {
                     sh 'docker pull $DOCKER_IMAGE'
                     sh 'docker compose down || true'
                     sh 'docker compose up -d'
                 }
+                                }
             }
         }
 
