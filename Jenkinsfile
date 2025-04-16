@@ -39,21 +39,22 @@ pipeline {
             }
         }
         
-        stage('Analyse SonarQube') {
-            steps {
-                dir('BackEnd') {
-                    withSonarQubeEnv('sq1') {
-                        sh '''
-                            npx sonar-scanner \
-                              -Dsonar.projectKey=EmergencySystem4Twin5 \
-                              -Dsonar.sources=. \
-                              -Dsonar.host.url=$SONAR_HOST_URL \
-                              -Dsonar.login=$SONAR_AUTH_TOKEN
-                        '''
-                    }
-                }
+stage('Analyse SonarQube') {
+    steps {
+        dir('BackEnd') {
+            withSonarQubeEnv('sq1') {
+                sh '''
+                    npm install -g sonar-scanner --registry=https://registry.npmjs.org
+                    sonar-scanner \
+                      -Dsonar.projectKey=EmergencySystem4Twin5 \
+                      -Dsonar.sources=. \
+                      -Dsonar.host.url=$SONAR_HOST_URL \
+                      -Dsonar.login=$SONAR_AUTH_TOKEN
+                '''
             }
         }
+    }
+}
         stage('Deploy avec Docker Compose') {
             steps {
                 script {
