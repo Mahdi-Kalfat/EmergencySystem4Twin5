@@ -59,15 +59,18 @@ pipeline {
             }
         }
 
-        stage('Deploy avec Docker Compose') {
-            steps {
-                script {
-                    sh 'docker pull $DOCKER_IMAGE'
-                    sh 'docker compose down || true'
-                    sh 'docker compose up -d'
-                }
+stage('Deploy avec Docker Compose') {
+    steps {
+        script {
+            dir('BackEnd') {
+                sh 'docker pull $DOCKER_IMAGE'
+                sh 'docker compose down || true'
+                sh 'docker compose up -d'
             }
         }
+    }
+}
+
 
         stage('Vérification des conteneurs') {
             steps {
