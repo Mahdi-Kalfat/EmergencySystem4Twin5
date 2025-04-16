@@ -131,6 +131,7 @@ stage('Deploy to Nexus') {
             }
         }
     }
+}
 
 
     }
