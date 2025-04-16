@@ -59,22 +59,15 @@ pipeline {
             }
         }
 
-stage('Deploy avec Docker Compose') {
-    steps {
-        script {
-            dir('BackEnd') {
-                // Build and tag the image
-                sh 'docker build -t anasbettouzia/nodemongoapp:6.0 .'
-                // Push to registry if needed
-                // sh 'docker push anasbettouzia/nodemongoapp:6.0'
-                
-                // Stop and start containers
-                sh 'docker compose down || true'
-                sh 'docker compose up -d'
+        stage('Deploy avec Docker Compose') {
+            steps {
+                script {
+                    sh 'docker pull $DOCKER_IMAGE'
+                    sh 'docker compose down || true'
+                    sh 'docker compose up -d'
+                }
             }
         }
-    }
-}
 
 
         stage('Vérification des conteneurs') {
