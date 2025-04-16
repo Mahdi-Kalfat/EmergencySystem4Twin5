@@ -43,17 +43,24 @@ pipeline {
 stage('Pack NodeJS Project') {
     steps {
         dir('BackEnd') {
-            // 1. Incrémenter d'abord la version
+            // 1. Incrémenter la version
             sh 'npm version patch --no-git-tag-version'
             
-            // 2. Ensuite pack pour créer le .tgz avec la nouvelle version
+            // 2. Nettoyer les anciens .tgz
+            sh 'rm -f *.tgz'
+
+            // 3. Pack avec la nouvelle version
             sh 'npm pack'
 
-            // 3. Archiver le fichier généré
+            // 4. Vérifie le contenu
+            sh 'ls -la *.tgz'
+
+            // 5. Archive le bon fichier
             archiveArtifacts artifacts: '*.tgz', fingerprint: true
         }
     }
 }
+
 
 
 stage('Deploy to Nexus') {
