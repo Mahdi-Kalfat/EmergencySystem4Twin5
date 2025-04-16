@@ -84,19 +84,11 @@ pipeline {
                 stage('Pack NodeJS Project') {
     steps {
         dir('BackEnd') {
-            // 1. Incrémenter la version
             sh 'npm version patch --no-git-tag-version'
-            
-            // 2. Nettoyer les anciens .tgz
             sh 'rm -f *.tgz'
-
-            // 3. Pack avec la nouvelle version
             sh 'npm pack'
-
-            // 4. Vérifie le contenu
             sh 'ls -la *.tgz'
 
-            // 5. Archive le bon fichier
             archiveArtifacts artifacts: '*.tgz', fingerprint: true
         }
     }
@@ -108,25 +100,29 @@ stage('Deploy to Nexus') {
     steps {
         dir('BackEnd') {
             script {
-                def version = sh(script: 'node -p "require(\'./package.json\').version"', returnStdout: true).trim()
-                def packageFile = sh(script: 'ls *.tgz', returnStdout: true).trim()
+                // Get version from package.json more reliably
+                def packageJson = readJSON file: 'package.json'
+                def version = packageJson.version
+                def packageName = packageJson.name
+                
+                // Find the exact tgz filename
+                def packageFile = sh(script: "ls ${packageName}-${version}.tgz", returnStdout: true).trim()
 
-                echo "Uploading file: ${packageFile} to Nexus"
-
-                nexusArtifactUploader(
-                    nexusVersion: 'nexus3',
-                    protocol: 'http',
-                    nexusUrl: "${env.NEXUS_URL}",
-                    groupId: 'emergency',
-                    version: "${version}",
-                    repository: "${env.NEXUS_REPO}",
-                    credentialsId: 'deploymentRepo',
-                    artifacts: [[
-                        artifactId: 'emergencymanagementsystem',
-                        classifier: '',
-                        file: "${packageFile}",
-                        type: 'tgz'
-                    ]]
+                echo "Uploading ${packageFile} to Nexus"
+                
+                // Use nexusPublisher instead of nexusArtifactUploader for better compatibility
+                nexusPublisher(
+                    nexusInstanceId: 'nexus3',
+                    nexusRepositoryId: "${env.NEXUS_REPO}",
+                    packages: [
+                        [
+                            $class: 'NpmPackage',
+                            packageName: "${packageName}",
+                            version: "${version}",
+                            credentialsId: 'deploymentRepo',
+                            file: "${packageFile}"
+                        ]
+                    ]
                 )
             }
         }
