@@ -81,6 +81,57 @@ pipeline {
             }
         }
 
+                stage('Pack NodeJS Project') {
+    steps {
+        dir('BackEnd') {
+            // 1. Incrémenter la version
+            sh 'npm version patch --no-git-tag-version'
+            
+            // 2. Nettoyer les anciens .tgz
+            sh 'rm -f *.tgz'
+
+            // 3. Pack avec la nouvelle version
+            sh 'npm pack'
+
+            // 4. Vérifie le contenu
+            sh 'ls -la *.tgz'
+
+            // 5. Archive le bon fichier
+            archiveArtifacts artifacts: '*.tgz', fingerprint: true
+        }
+    }
+}
+
+
+
+stage('Deploy to Nexus') {
+    steps {
+        dir('BackEnd') {
+            script {
+                def version = sh(script: 'node -p "require(\'./package.json\').version"', returnStdout: true).trim()
+                def packageFile = sh(script: 'ls *.tgz', returnStdout: true).trim()
+
+                echo "Uploading file: ${packageFile} to Nexus"
+
+                nexusArtifactUploader(
+                    nexusVersion: 'nexus3',
+                    protocol: 'http',
+                    nexusUrl: "${env.NEXUS_URL}",
+                    groupId: 'emergency',
+                    version: "${version}",
+                    repository: "${env.NEXUS_REPO}",
+                    credentialsId: 'deploymentRepo',
+                    artifacts: [[
+                        artifactId: 'emergencymanagementsystem',
+                        classifier: '',
+                        file: "${packageFile}",
+                        type: 'tgz'
+                    ]]
+                )
+            }
+        }
+    }
+
 
     }
 }
