@@ -81,69 +81,6 @@ pipeline {
             }
         }
 
-                stage('Pack NodeJS Project') {
-    steps {
-        dir('BackEnd') {
-            sh 'npm version patch --no-git-tag-version'
-            sh 'rm -f *.tgz'
-            sh 'npm pack'
-            sh 'ls -la *.tgz'
-
-            archiveArtifacts artifacts: '*.tgz', fingerprint: true
-        }
-    }
-}
-
-stage('Configure NPM for Nexus') {
-    steps {
-        dir('BackEnd') {
-            withCredentials([usernamePassword(credentialsId: 'deploymentRepo', 
-                           usernameVariable: 'NEXUS_USER', 
-                           passwordVariable: 'NEXUS_PASS')]) {
-                sh '''
-                    npm config set registry http://172.20.116.17:8081/repository/npm-piweb/
-                    npm config set _auth $(echo -n "${NEXUS_USER}:${NEXUS_PASS}" | base64)
-                    npm config set always-auth true
-                '''
-            }
-        }
-    }
-}
-
-stage('Deploy to Nexus') {
-    steps {
-        dir('BackEnd') {
-            script {
-                try {
-                    def packageJson = readJSON file: 'package.json'
-                    def version = packageJson.version
-                    def packageName = packageJson.name
-                    def packageFile = "${packageName}-${version}.tgz"
-                    
-                    echo "Uploading ${packageFile} to Nexus"
-                    
-                    nexusPublisher(
-                        nexusInstanceId: 'nexus3',
-                        nexusRepositoryId: "${env.NEXUS_REPO}",
-                        packages: [
-                            [
-                                $class: 'NpmPackage',
-                                packageName: "${packageName}",
-                                version: "${version}",
-                                credentialsId: 'deploymentRepo',
-                                file: "${packageFile}"
-                            ]
-                        ]
-                    )
-                } catch (Exception e) {
-                    error "Failed to deploy to Nexus: ${e.message}"
-                    // Optional: Add fallback upload method here
-                }
-            }
-        }
-    }
-}    
-
 
     }
 }
