@@ -6,8 +6,6 @@ pipeline {
     }
     environment {
         DOCKER_IMAGE = 'anasbettouzia/nodemongoapp:6.0'
-        NEXUS_URL = '172.20.116.17:8081'
-        NEXUS_REPO = 'npm-piweb'
     }
 
     stages {
