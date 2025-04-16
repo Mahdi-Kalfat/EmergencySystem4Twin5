@@ -1,10 +1,12 @@
+version: '3.8'
+
 services:
   db:
     image: mongo:4.2
     container_name: db
     restart: always
     environment:
-      MONGO_INITDB_ROOT_USERNAME: 
+      MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: 
     ports:
       - "27017:27017"
@@ -13,16 +15,19 @@ services:
       - mongo-data:/data/db
 
   app:
-    image: anasbettouzia/nodemongoapp:6.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: 192.168.33.10:8083/nodemongoapp:6.0
     container_name: back
     restart: always
     ports:
-      - "3001:3001"
+      - "3000:3000"
     depends_on:
       - db
     environment:
-      PORT: 3001
-      MONGO_URI: mongodb://root:example@db:27017/EmergencyManagementSystemBD?authSource=admin
+      PORT: 3000
+      MONGO_URI: mongodb://127.0.0.1:27017/EmergencyManagementSystemBD
     working_dir: /app
     command: npm run dev
 
