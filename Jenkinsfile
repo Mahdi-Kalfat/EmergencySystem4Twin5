@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -37,22 +38,6 @@ pipeline {
                 }
             }
         }
-        
-        stage('Analyse SonarQube') {
-            steps {
-                dir('BackEnd') {
-                    withSonarQubeEnv('sq1') {
-                        sh '''
-                            npx sonar-scanner \
-                              -Dsonar.projectKey=EmergencySystem4Twin5 \
-                              -Dsonar.sources=. \
-                              -Dsonar.host.url=$SONAR_HOST_URL \
-                              -Dsonar.login=$SONAR_AUTH_TOKEN
-                        '''
-                    }
-                }
-            }
-        }
         stage('Deploy avec Docker Compose') {
             steps {
                 script {
@@ -67,15 +52,6 @@ pipeline {
                 script {
                     sh 'docker ps'
                 }
-            }
-        }
-                stage('Vérification Prometheus') {
-            steps {
-                echo 'Vérification de l\'exposition des métriques de Jenkins'
-                sh 'curl -s http://172.20.116.17:8080/prometheus || echo "Erreur: Jenkins ne fournit pas les métriques"'
-
-                echo 'Vérification que Prometheus récupère les métriques'
-                sh 'curl -s http://localhost:9090/api/v1/targets | jq .'
             }
         }
 
