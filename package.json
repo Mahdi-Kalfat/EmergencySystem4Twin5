@@ -1,10 +1,11 @@
 {
   "name": "emergencymanagementsystem",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "dev": "nodemon ./bin/www"
+    "dev": "nodemon ./bin/www",
+    "publish:npm": "npm publish --registry http://172.20.116.17:8081/repository/npm-piweb/"
   },
   "dependencies": {
     "axios": "^1.8.1",
@@ -21,6 +22,6 @@
     "nodemailer": "^6.10.0"
   },
   "publishConfig": {
-  "registry": "http://172.20.116.17:8081/repository/npm-piweb/"
-}
+    "registry": "http://172.20.116.17:8081/repository/npm-piweb/"
+  }
 }
