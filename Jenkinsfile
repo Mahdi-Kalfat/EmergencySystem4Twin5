@@ -114,7 +114,6 @@ stage('Deploy to Nexus') {
     steps {
         dir('BackEnd') {
             script {
-                try {
                     def packageJson = readJSON file: 'package.json'
                     def version = packageJson.version
                     def packageName = packageJson.name
@@ -135,10 +134,6 @@ stage('Deploy to Nexus') {
                             ]
                         ]
                     )
-                } catch (Exception e) {
-                    error "Failed to deploy to Nexus: ${e.message}"
-                    // Optional: Add fallback upload method here
-                }
             }
         }
     }
