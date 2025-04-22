@@ -37,22 +37,39 @@ docker-compose up --build
 📁 Directory Structure
 
 📂 emergency-response-system/
+
 ├── 📁 backend/              # Backend source code
+
 │   ├── controllers/
+
 │   ├── models/
+
 │   ├── routes/
+
 │   ├── Dockerfile
+
 │   └── app.js
+
 ├── 📁 frontend/             # React frontend
+
 │   ├── components/
+
 │   ├── pages/
+
 │   ├── Dockerfile
+
 │   └── App.jsx
+
 ├── 📁 jenkins/              # Jenkins config (optional)
+
 │   └── Jenkinsfile
+
 ├── docker-compose.yml      # Multi-container config
+
 ├── 📁 docs/                 # Project documentation
+
 ├── 📁 tests/                # Unit & integration tests
+
 └── README.md
 
 🚀 Getting Started
@@ -67,7 +84,7 @@ Jenkins (optional for CI/CD)
 
 🚀 Local Installation (without Docker)
 
-git clone https://github.com/your-username/emergency-response-system.git
+git clone https://github.com/Mahdi-Kalfat/EmergencySystem4Twin5.git
 cd emergency-response-system
 
 cd backend
