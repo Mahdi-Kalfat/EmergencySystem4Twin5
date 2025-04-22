@@ -85,7 +85,8 @@ Jenkins (optional for CI/CD)
 🚀 Local Installation (without Docker)
 
 git clone https://github.com/Mahdi-Kalfat/EmergencySystem4Twin5.git
-cd emergency-response-system
+
+cd EmergencySystem4Twin5
 
 cd backend
 npm install
