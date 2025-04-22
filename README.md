@@ -81,5 +81,7 @@ npm run dev
 🙏 Acknowledgments
 
 Thanks to our academic mentors for their valuable feedback.
+
 Special thanks to all contributors for their effort and collaboration.
+
 Project inspired by real-world emergency response protocols and open-source tools.
