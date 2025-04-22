@@ -88,13 +88,13 @@ git clone https://github.com/Mahdi-Kalfat/EmergencySystem4Twin5.git
 
 cd EmergencySystem4Twin5
 
-cd backend
-npm install
-npm start
+cd backend |
+npm install |
+npm start |
 
-cd ../frontend
-npm install
-npm run dev
+cd ../frontend |
+npm install |
+npm run dev 
 
 🙏 Acknowledgments
 
