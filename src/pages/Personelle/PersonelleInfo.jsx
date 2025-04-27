@@ -18,6 +18,8 @@ const UserInfoModal = ({ user, onClose }) => {
           <p><strong>Name:</strong> {user.name}</p>
           <p><strong>Email:</strong> {user.email}</p>
           <p><strong>Role:</strong> {user.role}</p>
+          <p><strong>Country:</strong> {user.country}</p>
+          <p><strong>City:</strong> {user.city}</p>
           <p><strong>Phone Number:</strong> {user.phoneNumber}</p>
           <p><strong>Age:</strong> {user.age}</p>
           <p><strong>Admission Date:</strong> {new Date(user.admission_date).toLocaleDateString()}</p>

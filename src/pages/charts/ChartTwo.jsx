@@ -1,25 +1,62 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Chart from "react-apexcharts";
 
 const ChartTwo = () => {
-  const [openDropDown, setOpenDropDown] = useState(false);
+  const [chartData, setChartData] = useState({
+    series: [],
+    labels: [],
+  });
 
-  const toggleDropDown = () => {
-    setOpenDropDown(!openDropDown);
-  };
+  useEffect(() => {
+    const fetchPersonnelData = async () => {
+      try {
+        const token = document.cookie.split("; ").find(row => row.startsWith("token="))?.split("=")[1];
+
+        const response = await fetch("http://localhost:3001/users/display", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch personnel data");
+        }
+
+        const data = await response.json();
+
+        // Count personnel by role
+        const roleCounts = data.reduce((acc, user) => {
+          acc[user.role] = (acc[user.role] || 0) + 1;
+          return acc;
+        }, {});
+
+        // Prepare series and labels for the chart
+        const series = Object.values(roleCounts);
+        const labels = Object.keys(roleCounts);
+
+        setChartData({ series, labels });
+      } catch (error) {
+        console.error("Error fetching personnel data:", error);
+      }
+    };
+
+    fetchPersonnelData();
+  }, []);
 
   const chartOptions = {
     chart: {
       type: "pie",
-      height: 250, // Increased height for better visibility
+      height: 250,
     },
-    series: [44, 55, 13, 43, 22],
-    labels: ["Team A", "Team B", "Team C", "Team D", "Team E"],
+    series: chartData.series,
+    labels: chartData.labels,
     dataLabels: {
-      enabled: false, // Disabling data labels inside the chart
+      enabled: false,
     },
     legend: {
-      position: "bottom", // Moving legend to the bottom
+      position: "bottom",
     },
     responsive: [
       {
@@ -44,13 +81,12 @@ const ChartTwo = () => {
           <div className="flex justify-between">
             <div>
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                Monthly Target
+                Personnel Distribution
               </h3>
               <p className="mt-1 text-theme-sm text-gray-500 dark:text-gray-400">
-                Target you’ve set for each month
+                Distribution of personnel by roles
               </p>
             </div>
-            
           </div>
 
           <div className="relative max-h-[195px]">
@@ -62,39 +98,6 @@ const ChartTwo = () => {
                 height={230}
               />
             </div>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-center gap-5 px-6 py-3.5 sm:gap-8 sm:py-5 ">
-          <div>
-            <p className="mb-1 text-center text-theme-xs text-gray-500 dark:text-gray-400 sm:text-sm">
-              Target
-            </p>
-            <p className="text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
-              $20K 🔴
-            </p>
-          </div>
-
-          <div className="h-7 w-px bg-gray-200 dark:bg-gray-800"></div>
-
-          <div>
-            <p className="mb-1 text-center text-theme-xs text-gray-500 dark:text-gray-400 sm:text-sm">
-              Revenue
-            </p>
-            <p className="text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
-              $20K 🟢
-            </p>
-          </div>
-
-          <div className="h-7 w-px bg-gray-200 dark:bg-gray-800"></div>
-
-          <div>
-            <p className="mb-1 text-center text-theme-xs text-gray-500 dark:text-gray-400 sm:text-sm">
-              Today
-            </p>
-            <p className="text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
-              $20K 🟢
-            </p>
           </div>
         </div>
       </div>

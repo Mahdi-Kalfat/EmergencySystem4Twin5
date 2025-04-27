@@ -2,46 +2,48 @@ import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit, faTrash, faPlus, faEye } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
-import SideBar from "../../components/SideBar"; // Adjust path as needed
-import Header from "../../components/Header"; // Adjust path as needed
-import UserInfoModal from "./PersonelleInfo"; // Adjust path as needed
+import SideBar from "../../components/SideBar";
+import Header from "../../components/Header";
+import UserInfoModal from "./PersonelleInfo";
+import Swal from "sweetalert2"; // Import SweetAlert2
 
 const Personelle = () => {
   const [sidebarToggle, setSidebarToggle] = useState(false);
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
+  const connectedUserRole = JSON.parse(localStorage.getItem("user"))?.role || ""; // Get the role of the connected user
   const navigate = useNavigate();
 
   const allowedRoles = ["Doctor", "Nurse", "Driver", "Chef", "worker"];
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const token = document.cookie.split("; ").find(row => row.startsWith("token="))?.split("=")[1];
+  const fetchUsers = async () => {
+    try {
+      const token = document.cookie.split("; ").find(row => row.startsWith("token="))?.split("=")[1];
 
-        const response = await fetch("http://localhost:3000/users/display", {
+      const response = await fetch("http://localhost:3001/users/display", {
         method: "GET",
         headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-        }
-        });
-          
-        if (!response.ok) {
-          throw new Error("Failed to fetch users");
-        }
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
 
-        const data = await response.json();
-
-        // Filter users based on allowed roles
-        const filteredUsers = data.filter((user) => allowedRoles.includes(user.role));
-
-        setUsers(filteredUsers);
-      } catch (error) {
-        console.error("Error fetching users:", error);
+      if (!response.ok) {
+        throw new Error("Failed to fetch users");
       }
-    };
 
+      const data = await response.json();
+
+      // Filter users based on allowed roles
+      const filteredUsers = data.filter((user) => allowedRoles.includes(user.role));
+
+      setUsers(filteredUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  };
+
+  useEffect(() => {
     fetchUsers();
   }, []);
 
@@ -49,15 +51,20 @@ const Personelle = () => {
     navigate("/addpersonelle");
   };
 
+  const handleEditClick = (emailSent) => {
+    // Redirect to the edit page and pass the email as state
+    navigate("/editPersonelle", { state: { emailSent } });
+  };
+
   const handleViewClick = async (email) => {
     try {
-      const response = await fetch(`http://localhost:3000/users/findBymail`, {
+      const response = await fetch(`http://localhost:3001/users/findBymail`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${document.cookie.split("; ").find(row => row.startsWith("token="))?.split("=")[1]}`
+          "Authorization": `Bearer ${document.cookie.split("; ").find(row => row.startsWith("token="))?.split("=")[1]}`,
         },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email }),
       });
 
       if (!response.ok) {
@@ -68,6 +75,57 @@ const Personelle = () => {
       setSelectedUser(userData);
     } catch (error) {
       console.error("Error fetching user details:", error);
+    }
+  };
+
+  const handleDeleteClick = async (userId) => {
+    // Show confirmation pop-up
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    });
+
+    // If user confirms, proceed with deletion
+    if (result.isConfirmed) {
+      try {
+        const token = document.cookie.split("; ").find(row => row.startsWith("token="))?.split("=")[1];
+
+        const response = await fetch(`http://localhost:3001/users/deleteUser/${userId}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to delete user");
+        }
+
+        // Show success message
+        await Swal.fire({
+          title: "Deleted!",
+          text: "The user has been deleted.",
+          icon: "success",
+          confirmButtonColor: "#3085d6",
+        });
+
+        // Refresh the page to reflect the changes
+        window.location.reload();
+      } catch (error) {
+        console.error("Error deleting user:", error);
+        Swal.fire({
+          title: "Error",
+          text: "Failed to delete user. Please try again later.",
+          icon: "error",
+          confirmButtonColor: "#3085d6",
+        });
+      }
     }
   };
 
@@ -95,76 +153,64 @@ const Personelle = () => {
       <div className="content-container">
         <Header sidebarToggle={sidebarToggle} setSidebarToggle={setSidebarToggle} />
 
-        <div className="space-y-5 sm:space-y-6">
+        <div className="space-y-5 sm:space-y-6 px-4 sm:px-6 pt-4 sm:pt-6">
           <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
             <div className="px-5 py-4 sm:px-6 sm:py-5 flex justify-between items-center">
               <h3 className="text-base font-medium text-gray-800 dark:text-white/90">
                 List Personal
               </h3>
-              <button className="px-2 py-1 text-white bg-green-500 rounded hover:bg-green-600" onClick={handleAddClick}>
-                <FontAwesomeIcon icon={faPlus} />
-              </button>
+              {connectedUserRole === "Chef" && (
+                <button className="px-2 py-1 text-white bg-green-500 rounded hover:bg-green-600" onClick={handleAddClick}>
+                  <FontAwesomeIcon icon={faPlus} />
+                </button>
+              )}
             </div>
 
             <div className="p-5 border-t border-gray-100 dark:border-gray-800 sm:p-6">
-              <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-                <div className="max-w-full overflow-x-auto">
-                <table className="min-w-full table-fixed border-collapse border border-gray-200">
-                <thead className="bg-gray-100">
-                <tr className="border-b border-gray-200 dark:border-gray-800">
-                    <th className="px-5 py-3 sm:px-6 text-center w-1/4">Image</th>
-                    <th className="px-5 py-3 sm:px-6 text-center w-1/4">Name</th>
-                    <th className="px-5 py-3 sm:px-6 text-center w-1/4">Role</th>
-                    <th className="px-5 py-3 sm:px-6 text-center w-1/4">Action</th>
-                </tr>
-                </thead>
-
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {users.length > 0 ? (
-                    users.map((user) => (
-                    <tr key={user.id} className="text-center">
-                        <td className="px-5 py-4 sm:px-6">
-                        <div className="w-10 h-10 rounded-full overflow-hidden mx-auto">
-                            <img src={getImageByRole(user.role)} alt="User" className="w-100 h-100 object-cover" />
+                  users.map((user) => (
+                    <div key={user.id} className="bg-white rounded-lg shadow-md p-4">
+                      <div className="flex flex-col items-center">
+                        <div className="w-20 h-20 rounded-full overflow-hidden mb-4">
+                          <img src={`http://localhost:3001/uploads/${user.image}`} alt="User" className="w-full h-full object-cover" />
                         </div>
-                        </td>
-                        <td className="px-5 py-4 sm:px-6">
-                        <div className="flex flex-col items-center">
-                            <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                            {user.name}
-                            </span>
-                            <span className="block text-gray-500 text-theme-xs dark:text-gray-400">
-                            {user.email}
-                            </span>
-                        </div>
-                        </td>
-                        <td className="px-5 py-4 sm:px-6">{user.role}</td>
-                        <td className="px-5 py-4 sm:px-6">
-                        <div className="flex justify-center gap-2">
-                            <button className="px-2 py-1 text-white bg-blue-500 rounded hover:bg-blue-600">
-                            <FontAwesomeIcon icon={faEdit} />
+                        <h3 className="text-lg font-medium text-gray-800 dark:text-white/90">{user.name}</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{user.role}</p>
+                        <div className="flex justify-center gap-2 mt-4">
+                          {connectedUserRole === "Chef" && (
+                            <button
+                              className="px-2 py-1 text-white bg-blue-500 rounded hover:bg-blue-600"
+                              onClick={() => handleEditClick(user.email)}
+                            >
+                              <FontAwesomeIcon icon={faEdit} />
                             </button>
-                            <button className="px-2 py-1 text-white bg-red-500 rounded hover:bg-red-600">
-                            <FontAwesomeIcon icon={faTrash} />
+                          )}
+                          {connectedUserRole === "Chef" && (
+                            <button
+                              className="px-2 py-1 text-white bg-red-500 rounded hover:bg-red-600"
+                              onClick={() => handleDeleteClick(user.id)}
+                            >
+                              <FontAwesomeIcon icon={faTrash} />
                             </button>
-                            <button className="px-2 py-1 text-white bg-green-500 rounded hover:bg-green-600" onClick={() => handleViewClick(user.email)}>
+                          )}
+                          <button
+                            className="px-2 py-1 text-white bg-green-500 rounded hover:bg-green-600"
+                            onClick={() => handleViewClick(user.email)}
+                          >
                             <FontAwesomeIcon icon={faEye} />
-                            </button>
+                          </button>
                         </div>
-                        </td>
-                    </tr>
-                    ))
+                      </div>
+                    </div>
+                  ))
                 ) : (
-                    <tr>
-                    <td colSpan="4" className="text-center py-4">No users found</td>
-                    </tr>
+                  <div className="text-center py-4 col-span-full">No users found</div>
                 )}
-                </tbody>
-            </table>
-                </div>
               </div>
-            </div> 
-          </div> 
+            </div>
+          </div>
         </div>
       </div>
 

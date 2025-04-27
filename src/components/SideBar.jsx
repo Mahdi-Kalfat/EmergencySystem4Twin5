@@ -1,34 +1,42 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const SideBar = ({ sidebarToggle, setSidebarToggle, page }) => {
-  const [selected, setSelected] = useState('');
+  const [selected, setSelected] = useState("");
   const navigate = useNavigate();
 
   const handleSelection = (item) => {
-    setSelected(selected === item ? '' : item);
+    setSelected(selected === item ? "" : item);
   };
 
   return (
     <aside
       className={`sidebar fixed left-0 top-0 z-9999 flex h-screen w-[290px] flex-col overflow-y-hidden border-r border-gray-200 bg-white px-5 duration-300 ease-linear dark:border-gray-800 dark:bg-black lg:static lg:translate-x-0 ${
-        sidebarToggle ? 'translate-x-0 lg:w-[90px]' : '-translate-x-full'
+        sidebarToggle ? "translate-x-0 lg:w-[90px]" : "-translate-x-full"
       }`}
       onClick={(e) => e.stopPropagation()}
     >
       {/* SIDEBAR HEADER */}
       <div
         className={`sidebar-header flex items-center gap-2 pb-7 pt-8 ${
-          sidebarToggle ? 'justify-center' : 'justify-between'
+          sidebarToggle ? "justify-center" : "justify-between"
         }`}
       >
         <a href="index.html">
-          <span className={`logo ${sidebarToggle ? 'hidden' : ''}`}>
-            <img className="dark:hidden" src="./images/logo/logo.svg" alt="Logo" />
-            <img className="hidden dark:block" src="./images/logo/logo-dark.svg" alt="Logo" />
+          <span className={`logo ${sidebarToggle ? "hidden" : ""}`}>
+            <img
+              className="dark:hidden"
+              src="./images/logo/logo.svg"
+              alt="Logo"
+            />
+            <img
+              className="hidden dark:block"
+              src="./images/logo/logo-dark.svg"
+              alt="Logo"
+            />
           </span>
           <img
-            className={`logo-icon ${sidebarToggle ? 'lg:block' : 'hidden'}`}
+            className={`logo-icon ${sidebarToggle ? "lg:block" : "hidden"}`}
             src="./images/logo/logo-icon.svg"
             alt="Logo"
           />
@@ -41,7 +49,13 @@ const SideBar = ({ sidebarToggle, setSidebarToggle, page }) => {
           {/* Menu Group */}
           <div>
             <h3 className="mb-4 text-xs uppercase leading-[20px] text-gray-400">
-              <span className={`menu-group-title ${sidebarToggle ? 'lg:hidden' : ''}`}>MENU</span>
+              <span
+                className={`menu-group-title ${
+                  sidebarToggle ? "lg:hidden" : ""
+                }`}
+              >
+                MENU
+              </span>
               {sidebarToggle && (
                 <svg
                   className="menu-group-icon mx-auto fill-current"
@@ -66,18 +80,32 @@ const SideBar = ({ sidebarToggle, setSidebarToggle, page }) => {
               <li>
                 <a
                   href="#"
-                  onClick={() => navigate('/home')}
+                  onClick={() => navigate("/home")}
                   className={`menu-item group ${
-                    selected === 'Dashboard' || ['ecommerce', 'analytics', 'marketing', 'crm', 'stocks'].includes(page)
-                      ? 'menu-item-active'
-                      : 'menu-item-inactive'
+                    selected === "Dashboard" ||
+                    [
+                      "ecommerce",
+                      "analytics",
+                      "marketing",
+                      "crm",
+                      "stocks",
+                    ].includes(page)
+                      ? "menu-item-active"
+                      : "menu-item-inactive"
                   }`}
                 >
                   <svg
                     className={`${
-                      selected === 'Dashboard' || ['ecommerce', 'analytics', 'marketing', 'crm', 'stocks'].includes(page)
-                        ? 'menu-item-icon-active'
-                        : 'menu-item-icon-inactive'
+                      selected === "Dashboard" ||
+                      [
+                        "ecommerce",
+                        "analytics",
+                        "marketing",
+                        "crm",
+                        "stocks",
+                      ].includes(page)
+                        ? "menu-item-icon-active"
+                        : "menu-item-icon-inactive"
                     }`}
                     width="24"
                     height="24"
@@ -93,7 +121,13 @@ const SideBar = ({ sidebarToggle, setSidebarToggle, page }) => {
                     />
                   </svg>
 
-                  <span className={`menu-item-text ${sidebarToggle ? 'lg:hidden' : ''}`}>Dashboard</span>
+                  <span
+                    className={`menu-item-text ${
+                      sidebarToggle ? "lg:hidden" : ""
+                    }`}
+                  >
+                    Dashboard
+                  </span>
                 </a>
               </li>
               {/* Menu Item Dashboard */}
@@ -104,15 +138,19 @@ const SideBar = ({ sidebarToggle, setSidebarToggle, page }) => {
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    handleSelection('UserActions');
+                    handleSelection("UserActions");
                   }}
                   className={`menu-item group ${
-                    selected === 'UserActions' ? 'menu-item-active' : 'menu-item-inactive'
+                    selected === "UserActions"
+                      ? "menu-item-active"
+                      : "menu-item-inactive"
                   }`}
                 >
                   <svg
                     className={`${
-                      selected === 'UserActions' ? 'menu-item-icon-active' : 'menu-item-icon-inactive'
+                      selected === "UserActions"
+                        ? "menu-item-icon-active"
+                        : "menu-item-icon-inactive"
                     }`}
                     width="24"
                     height="24"
@@ -128,12 +166,20 @@ const SideBar = ({ sidebarToggle, setSidebarToggle, page }) => {
                     />
                   </svg>
 
-                  <span className={`menu-item-text ${sidebarToggle ? 'lg:hidden' : ''}`}>User Actions</span>
+                  <span
+                    className={`menu-item-text ${
+                      sidebarToggle ? "lg:hidden" : ""
+                    }`}
+                  >
+                    User Actions
+                  </span>
 
                   <svg
                     className={`menu-item-arrow ${
-                      selected === 'UserActions' ? 'menu-item-arrow-active' : 'menu-item-arrow-inactive'
-                    } ${sidebarToggle ? 'lg:hidden' : ''}`}
+                      selected === "UserActions"
+                        ? "menu-item-arrow-active"
+                        : "menu-item-arrow-inactive"
+                    } ${sidebarToggle ? "lg:hidden" : ""}`}
                     width="20"
                     height="20"
                     viewBox="0 0 20 20"
@@ -149,13 +195,13 @@ const SideBar = ({ sidebarToggle, setSidebarToggle, page }) => {
                     />
                   </svg>
                 </a>
-                {selected === 'UserActions' && (
+                {selected === "UserActions" && (
                   <ul className="ml-4 mt-2 space-y-2">
                     <li>
                       <a
                         href="#"
                         className="menu-item group menu-item-inactive"
-                        onClick={() => navigate('/personelle')}
+                        onClick={() => navigate("/personelle")}
                       >
                         <svg
                           className="menu-item-icon"
@@ -176,7 +222,11 @@ const SideBar = ({ sidebarToggle, setSidebarToggle, page }) => {
                       </a>
                     </li>
                     <li>
-                      <a href="#" className="menu-item group menu-item-inactive">
+                      <a
+                        href="#"
+                        className="menu-item group menu-item-inactive"
+                        onClick={() => navigate("/patient")}
+                      >
                         <svg
                           className="menu-item-icon"
                           width="20"
@@ -203,7 +253,6 @@ const SideBar = ({ sidebarToggle, setSidebarToggle, page }) => {
           </div>
         </nav>
         {/* Sidebar Menu */}
-
       </div>
     </aside>
   );

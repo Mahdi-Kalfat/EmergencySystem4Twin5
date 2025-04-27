@@ -1,12 +1,16 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import Cookies from "js-cookie";
 import SideBar from "../../components/SideBar";
 import Header from "../../components/Header";
 
-const AddPersonalForm = () => {
+const EditPersonalForm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { emailSent } = location.state || {};
+  const { id } = useParams(); // Get the user ID from the URL
   const [sidebarToggle, setSidebarToggle] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -20,9 +24,61 @@ const AddPersonalForm = () => {
     nbr_conge: "",
   });
   const [roleSpecificData, setRoleSpecificData] = useState({});
-  const [image, setImage] = useState(null);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState({});
+
+  // Fetch user data when the component mounts
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = Cookies.get("token");
+        if (!token) {
+          throw new Error("No token found in cookies. Please log in.");
+        }
+
+        const response = await axios.post(
+            `http://localhost:3001/users/findBymail`,
+            { email: emailSent }, // Pass the email in the request body
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+        const userData = response.data;
+
+        setFormData({
+          name: userData.name,
+          phoneNumber: userData.phoneNumber,
+          email: userData.email,
+          role: userData.role,
+          password: userData.password,
+          age: userData.age,
+          admission_date: userData.admission_date.split("T")[0],
+          conge: userData.conge,
+          nbr_conge: userData.nbr_conge,
+        });
+
+        // Set role-specific data
+        setRoleSpecificData({
+          speciality: userData.speciality,
+          grade: userData.grade,
+          poste_inf: userData.poste_inf,
+          grade_inf: userData.grade_inf,
+          experience: userData.experience,
+          garde: userData.garde,
+          speciality_chief: userData.speciality_chief,
+          poste: userData.poste,
+        });
+      } catch (error) {
+        setMessage("Error fetching user data: " + (error.response?.data?.message || error.message));
+        console.error("Error:", error);
+      }
+    };
+
+    fetchUserData();
+  }, [id]);
 
   const handleCommonInputChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -135,58 +191,27 @@ const AddPersonalForm = () => {
     e.preventDefault();
     if (!validateForm()) return;
 
+    const personalData = { ...formData, ...roleSpecificData };
+
     try {
       const token = Cookies.get("token");
       if (!token) {
         throw new Error("No token found in cookies. Please log in.");
       }
 
-      // Create FormData object for file upload
-      const formDataToSend = new FormData();
-      
-      // Append all regular form data
-      Object.entries(formData).forEach(([key, value]) => {
-        formDataToSend.append(key, value);
-      });
-      
-      // Append role-specific data
-      Object.entries(roleSpecificData).forEach(([key, value]) => {
-        formDataToSend.append(key, value);
-      });
-      
-      // Append the image file if it exists
-      if (image) {
-        formDataToSend.append('image', image);
-      }
-
-      const response = await axios.post("http://localhost:3001/users/addUser", formDataToSend, {
+      const response = await axios.put(`http://localhost:3001/users/editUser/${id}`, personalData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
         },
       });
 
-      setMessage("Personnel added successfully!");
+      setMessage("Personnel updated successfully!");
       console.log("Response:", response.data);
 
-      // Clear the form
-      setFormData({
-        name: "",
-        phoneNumber: "",
-        email: "",
-        role: "",
-        password: "",
-        age: "",
-        admission_date: "",
-        conge: "",
-        nbr_conge: "",
-      });
-      setRoleSpecificData({});
-      setImage(null);
+      // Redirect to the personnel list page
       navigate("/personelle");
-      setErrors({});
     } catch (error) {
-      setMessage("Error adding personnel: " + (error.response?.data?.message || error.message));
+      setMessage("Error updating personnel: " + (error.response?.data?.message || error.message));
       console.error("Error:", error);
     }
   };
@@ -517,17 +542,6 @@ const AddPersonalForm = () => {
                   />
                   {errors.age && <p className="text-red-500 text-sm mt-1">{errors.age}</p>}
                 </div>
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                    Upload Image
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setImage(e.target.files[0])}
-                    className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-none focus:ring focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                  />
-                </div>
               </div>
             </div>
           </div>
@@ -602,10 +616,12 @@ const AddPersonalForm = () => {
               </div>
             </div>
           </div>
+
+          {/* Submit Button and Message */}
         </form>
       </div>
     </div>
   );
 };
 
-export default AddPersonalForm;
+export default EditPersonalForm;    
