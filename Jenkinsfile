@@ -19,6 +19,15 @@ pipeline {
                     url: 'https://github.com/Mahdi-Kalfat/EmergencySystem4Twin5.git'
             }
         }
+        
+            stage('Checkout GIT - Frontend') {
+        steps {
+            dir('FrontEnd') {
+                git branch: 'Frontend-Dashboard',
+                    url: 'https://github.com/Mahdi-Kalfat/EmergencySystem4Twin5.git'
+            }
+        }
+    }
 
         stage('Install Dependencies - Backend') {
             steps {
