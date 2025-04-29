@@ -4,9 +4,11 @@ pipeline {
     tools {
         nodejs "NodeJS"
     }
+
     environment {
-        DOCKER_IMAGE = 'anasbettouzia/nodemongoapp:6.0'
-        DOCKER_IMAGE_Front = 'anasbettouzia/frontendemergency'
+        DOCKERHUB_USERNAME = 'anasbettouzia'
+        DOCKER_IMAGE = 'anasbettouzia/nodemongoapp'
+        DOCKER_IMAGE_FRONT = 'anasbettouzia/frontendemergency'
     }
 
     stages {
@@ -20,78 +22,90 @@ pipeline {
 
         stage('Install Dependencies - Backend') {
             steps {
-                script {
-                    dir('BackEnd') {
-                        sh 'rm -rf node_modules package-lock.json' 
-                        sh 'npm install --registry=https://registry.npmjs.org'  
-                    }
+                dir('BackEnd') {
+                    sh 'rm -rf node_modules package-lock.json'
+                    sh 'npm install --registry=https://registry.npmjs.org'
                 }
             }
         }
-
 
         stage('Run Tests - Backend') {
             steps {
-                script {
-                    dir('BackEnd') {
-                        sh 'npm test' 
+                dir('BackEnd') {
+                    sh 'npm test'
+                }
+            }
+        }
+
+        stage('Analyse SonarQube') {
+            steps {
+                dir('BackEnd') {
+                    withSonarQubeEnv('sq1') {
+                        sh '''
+                            npm install -g sonar-scanner --registry=https://registry.npmjs.org
+                            sonar-scanner \
+                              -Dsonar.projectKey=EmergencySystem4Twin5 \
+                              -Dsonar.sources=. \
+                              -Dsonar.host.url=$SONAR_HOST_URL \
+                              -Dsonar.login=$SONAR_AUTH_TOKEN
+                        '''
                     }
                 }
             }
         }
-        
-stage('Analyse SonarQube') {
-    steps {
-        dir('BackEnd') {
-            withSonarQubeEnv('sq1') {
-                sh '''
-                    npm install -g sonar-scanner --registry=https://registry.npmjs.org
-                    sonar-scanner \
-                      -Dsonar.projectKey=EmergencySystem4Twin5 \
-                      -Dsonar.sources=. \
-                      -Dsonar.host.url=$SONAR_HOST_URL \
-                      -Dsonar.login=$SONAR_AUTH_TOKEN
-                '''
+
+        stage('Build & Push Docker Backend') {
+            steps {
+                withCredentials([string(credentialsId: 'DOCKERHUB_PASSWORD', variable: 'DOCKERHUB_PASSWORD')]) {
+                    script {
+                        def tag = "${env.BUILD_NUMBER}"
+                        sh """
+                            docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
+                            docker build -t $DOCKER_IMAGE:$tag ./BackEnd
+                            docker tag $DOCKER_IMAGE:$tag $DOCKER_IMAGE:latest
+                            docker push $DOCKER_IMAGE:$tag
+                            docker push $DOCKER_IMAGE:latest
+                        """
+                    }
+                }
             }
         }
-    }
-}
+
+        stage('Build & Push Docker Frontend') {
+            steps {
+                withCredentials([string(credentialsId: 'DOCKERHUB_PASSWORD', variable: 'DOCKERHUB_PASSWORD')]) {
+                    script {
+                        def tag = "${env.BUILD_NUMBER}"
+                        sh """
+                            docker build -t $DOCKER_IMAGE_FRONT:$tag ./FrontEnd
+                            docker tag $DOCKER_IMAGE_FRONT:$tag $DOCKER_IMAGE_FRONT:latest
+                            docker push $DOCKER_IMAGE_FRONT:$tag
+                            docker push $DOCKER_IMAGE_FRONT:latest
+                        """
+                    }
+                }
+            }
+        }
+
         stage('Deploy avec Docker Compose') {
             steps {
-                script {
-                    sh 'docker pull $DOCKER_IMAGE'
-                    sh 'docker compose down || true'
-                    sh 'docker compose up -d'
-                }
+                sh 'docker compose down || true'
+                sh 'docker compose up -d'
             }
         }
-        stage('Deploy Front avec Docker Compose') {
-            steps {
-                script {
-                    sh 'docker pull $DOCKER_IMAGE_Front'
-                    sh 'docker compose down || true'
-                    sh 'docker compose up -d'
-                }
-            }
-        }
+
         stage('Vérification des conteneurs') {
             steps {
-                script {
-                    sh 'docker ps'
-                }
+                sh 'docker ps'
             }
         }
-                stage('Vérification Prometheus') {
+
+        stage('Vérification Prometheus') {
             steps {
-                echo 'Vérification de l\'exposition des métriques de Jenkins'
+                echo 'Vérification Prometheus'
                 sh 'curl -s http://172.20.116.17:8080/prometheus || echo "Erreur: Jenkins ne fournit pas les métriques"'
-
-                echo 'Vérification que Prometheus récupère les métriques'
-                sh 'curl -s http://localhost:9090/api/v1/targets | jq .'
+                sh 'curl -s http://localhost:9090/api/v1/targets | jq . || echo "jq non disponible"'
             }
         }
-
-
-
     }
 }
