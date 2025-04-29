@@ -56,22 +56,23 @@ pipeline {
 
         stage('Build & Push Docker Backend') {
             steps {
-                    dir('BackEnd') {
-                withCredentials([string(credentialsId: 'DOCKERHUB_PASSWORD', variable: 'DOCKERHUB_PASSWORD')]) {
-                    script {
-                        def tag = "${env.BUILD_NUMBER}"
-                        sh """
-                            docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
-                            docker build -t $DOCKER_IMAGE:$tag ./BackEnd
-                            docker tag $DOCKER_IMAGE:$tag $DOCKER_IMAGE:latest
-                            docker push $DOCKER_IMAGE:$tag
-                            docker push $DOCKER_IMAGE:latest
-                        """
+                dir('BackEnd') {
+                    withCredentials([string(credentialsId: 'DOCKERHUB_PASSWORD', variable: 'DOCKERHUB_PASSWORD')]) {
+                        script {
+                            def tag = "${env.BUILD_NUMBER}"
+                            sh """
+                                echo \$DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
+                                docker build -t $DOCKER_IMAGE:$tag .
+                                docker tag $DOCKER_IMAGE:$tag $DOCKER_IMAGE:latest
+                                docker push $DOCKER_IMAGE:$tag
+                                docker push $DOCKER_IMAGE:latest
+                            """
+                        }
                     }
-                }
                 }
             }
         }
+
 
         stage('Build & Push Docker Frontend') {
             steps {
