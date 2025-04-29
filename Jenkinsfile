@@ -6,6 +6,7 @@ pipeline {
     }
     environment {
         DOCKER_IMAGE = 'anasbettouzia/nodemongoapp:6.0'
+        DOCKER_IMAGE_Front = 'anasbettouzia/frontendemergency'
     }
 
     stages {
@@ -78,6 +79,15 @@ stage('Analyse SonarQube') {
 
                 echo 'Vérification que Prometheus récupère les métriques'
                 sh 'curl -s http://localhost:9090/api/v1/targets | jq .'
+            }
+        }
+                stage('Deploy Front avec Docker Compose') {
+            steps {
+                script {
+                    sh 'docker pull $DOCKER_IMAGE_Front'
+                    sh 'docker compose down || true'
+                    sh 'docker compose up -d'
+                }
             }
         }
 
