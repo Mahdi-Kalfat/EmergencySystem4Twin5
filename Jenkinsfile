@@ -56,6 +56,7 @@ pipeline {
 
         stage('Build & Push Docker Backend') {
             steps {
+                    dir('BackEnd') {
                 withCredentials([string(credentialsId: 'DOCKERHUB_PASSWORD', variable: 'DOCKERHUB_PASSWORD')]) {
                     script {
                         def tag = "${env.BUILD_NUMBER}"
@@ -67,6 +68,7 @@ pipeline {
                             docker push $DOCKER_IMAGE:latest
                         """
                     }
+                }
                 }
             }
         }
