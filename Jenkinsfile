@@ -5,7 +5,7 @@ pipeline {
         nodejs "NodeJS"
     }
     environment {
-        DOCKER_IMAGE = 'anasbettouzia/nodemongoapp:6.0'
+        DOCKER_IMAGE = 'anasbettouzia/nodemongoapp:6.0',
         DOCKER_IMAGE_Front = 'anasbettouzia/frontendemergency'
     }
 
