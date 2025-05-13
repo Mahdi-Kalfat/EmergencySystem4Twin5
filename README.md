@@ -18,14 +18,15 @@ It enhances **patient satisfaction**, reduces **waiting times**, and ensures **e
 
 ## 🛠 Tech Stack
 
-- **Frontend**: React.js, HTML, CSS
-- **Backend**: Node.js, Express.js, Python (if needed)
-- **Database**: MongoDB / PostgreSQL
-- **API Design**: RESTful API
-- **Authentication**: JWT / Sessions
-- **CI/CD**: Jenkins
-- **Containerization**: Docker & Docker Compose
-- **Development Tools**: Git, GitHub, Postman, dotenv
+| Layer         | Technologies |
+|---------------|--------------|
+| **Frontend**  | React.js, HTML5, CSS3 |
+| **Backend**   | Node.js, Express.js |
+| **Database**  | MongoDB |
+| **AI Models** | Python (for ML models) |
+| **APIs**      | RESTful APIs |
+| **Authentication** | JWT, Sessions, reCAPTCHA, OTP |
+| **DevOps Tools** | Docker, Jenkins, SonarQube |
 
 ## 🐳 Docker Setup
 
