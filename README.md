@@ -8,12 +8,13 @@ It enhances **patient satisfaction**, reduces **waiting times**, and ensures **e
 
 ## ✨ Features
 
-- 🔐 **User Management**: Handles authentication, authorization, roles, and permissions.
-- 👨‍⚕️ **Personnel Management**: Manages medical and administrative staff details.
-- 🏥 **Patient Management**: Maintains emergency records, medical history, and patient status.
-- 🚑 **Ambulance Management**: Tracks availability, dispatches ambulances, and monitors routes.
-- 🧰 **Resource Management**: Controls inventory including medical supplies, beds, and tools.
-- 📝 **Reclamation Management**: Enables users to submit complaints or feedback about the emergency services.
+- 🔐 **User Management** – Authentication, authorization, roles, and secure login with reCAPTCHA and OTP.
+- 👨‍⚕️ **Personnel Management** – Manage information about medical and administrative staff.
+- 🏥 **Patient Management** – Track patient records, history, and medical status.
+- 🚑 **Ambulance Tracking** – Real-time ambulance tracking using live maps and route monitoring.
+- 🤖 **AI Integration** – Face recognition for secure identification and a predictive model to detect diabetes.
+- 📝 **Reclamation System** – Submit and manage complaints/feedback from users.
+- 🧰 **Resource Depot** – Manage emergency equipment, beds, supplies, and tools.
 
 ## 🛠 Tech Stack
 
