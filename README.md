@@ -35,6 +35,10 @@ The project includes a `Dockerfile` and `docker-compose.yml` for containerizatio
 ### Build & Run
 
 ```bash
+# Clone the repository
+git clone https://github.com/Mahdi-Kalfat/EmergencySystem4Twin5.git
+cd EmergencySystem4Twin5
+
 # Build and start all containers
 docker-compose up --build
 ```
@@ -101,9 +105,8 @@ npm install |
 npm run dev |
 
 🙏 Acknowledgments
+We express our sincere gratitude to our academic mentors for their guidance and feedback throughout the development of this project.
 
-Thanks to our academic mentors for their valuable feedback.
+Special thanks to the contributors for their collaboration and commitment.
 
-Special thanks to all contributors for their effort and collaboration.
-
-Project inspired by real-world emergency response protocols and open-source tools.
+Project inspired by real-world emergency medical systems and built using open-source technologies.
