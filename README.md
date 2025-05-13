@@ -2,7 +2,9 @@
 
 ## 📘 Overview
 
-This repository contains the source code and documentation for an **academic Emergency Response Management System**. The system aims to enhance emergency response operations by offering centralized management of users, personnel, ambulances, patients, resources, and complaint handling. It ensures real-time coordination and efficient communication between various emergency services.
+This repository contains the source code and documentation for an academic project titled **Intelligent Emergency Response Management System**, developed as part of the integrated project at **Esprit School of Engineering**.  
+The system aims to optimize emergency department (ED) operations by improving resource allocation, patient flow, and real-time data exchange between healthcare professionals.  
+It enhances **patient satisfaction**, reduces **waiting times**, and ensures **effective medical intervention** in critical scenarios.
 
 ## ✨ Features
 
