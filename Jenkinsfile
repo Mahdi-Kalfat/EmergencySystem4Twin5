@@ -9,6 +9,7 @@ pipeline {
         DOCKERHUB_USERNAME = 'anasbettouzia'
         DOCKER_IMAGE = 'anasbettouzia/nodemongoapp'
         DOCKER_IMAGE_FRONT = 'anasbettouzia/frontendemergency'
+        DOCKER_IMAGE_FRONT_client = 'anasbettouzia/frontend-client-frontemergency'
     }
 
     stages {
@@ -92,6 +93,21 @@ pipeline {
                             docker tag $DOCKER_IMAGE_FRONT:$tag $DOCKER_IMAGE_FRONT:latest
                             docker push $DOCKER_IMAGE_FRONT:$tag
                             docker push $DOCKER_IMAGE_FRONT:latest
+                        """
+                    }
+                }
+            }
+        }
+        stage('Build & Push Docker Frontend-client') {
+            steps {
+                withCredentials([string(credentialsId: 'DOCKERHUB_PASSWORD', variable: 'DOCKERHUB_PASSWORD')]) {
+                    script {
+                        def tag = "${env.BUILD_NUMBER}"
+                        sh """
+                            docker build -t $DOCKER_IMAGE_FRONT_client:$tag ./FrontEnd
+                            docker tag $DOCKER_IMAGE_FRONT_client:$tag $DOCKER_IMAGE_FRONT_client:latest
+                            docker push $DOCKER_IMAGE_FRONT_client:$tag
+                            docker push $DOCKER_IMAGE_FRONT_client:latest
                         """
                     }
                 }
